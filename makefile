@@ -9,7 +9,7 @@ BUILD_DIR := bin
 OBJ_DIR := obj
 INC_DIR := include
 
-NR_DPUS ?= 2554
+NR_DPUS ?=64
 NR_TASKLETS ?= 16
 GRAPH ?= WV
 PATTERN ?= CLIQUE3
@@ -17,6 +17,7 @@ PATTERN ?= CLIQUE3
 COMMON_CCFLAGS := -c -Wall -Wextra -g -O2 -I${INC_DIR} -DNR_TASKLETS=${NR_TASKLETS} -DNR_DPUS=${NR_DPUS} -D${GRAPH} -DDPU_BINARY=\"${BUILD_DIR}/dpu\" -DDPU_ALLOC_BINARY=\"${BUILD_DIR}/dpu_alloc\" -D${PATTERN}
 HOST_CCFLAGS := ${COMMON_CCFLAGS} -std=c11 `dpu-pkg-config --cflags dpu` 
 DPU_CCFLAGS := ${COMMON_CCFLAGS}
+
 COMMON_LFLAGS := -DNR_TASKLETS=${NR_TASKLETS}
 HOST_LFLAGS := ${COMMON_LFLAGS} `dpu-pkg-config --libs dpu`
 DPU_LFLAGS := ${COMMON_LFLAGS}
@@ -35,7 +36,7 @@ all_before:
 	@mkdir -p result
 
 ${BUILD_DIR}/host: ${OBJ_DIR}/${HOST_DIR}/main.o ${OBJ_DIR}/${HOST_DIR}/partition.o ${OBJ_DIR}/${HOST_DIR}/mine.o ${OBJ_DIR}/${HOST_DIR}/set_op.o ${OBJ_DIR}/${HOST_DIR}/heap.o
-	@${LINK} ${HOST_LFLAGS} $^ -o $@
+	@${LINK} $^ ${HOST_LFLAGS}  -o $@
 
 ${BUILD_DIR}/dpu: ${OBJ_DIR}/${DPU_DIR}/main.o ${OBJ_DIR}/${DPU_DIR}/set_op.o ${OBJ_DIR}/${DPU_DIR}/${PATTERN}.o
 	@${DPULINK} ${DPU_LFLAGS} $^ -o $@

@@ -9,7 +9,7 @@
 // #define CPU_RUN
 #define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
-#if defined(CLIQUE4) || defined(CLIQUE5)
+#if defined(CLIQUE4) || defined(CLIQUE5) || defined(CLIQUE3)
 #define BITMAP
 #endif
 
@@ -42,6 +42,14 @@
 #define DATA_NAME "soc-LiveJournall"
 #define N (1<<23)
 #define M (1<<27)
+#elif defined(PA)
+#define DATA_NAME "roadNet-PA_adj"
+#define N (1<<23)
+#define M (1<<25)
+#elif defined(SP)
+#define DATA_NAME "simple_csr_graph"
+#define N (1<<6)
+#define M (1<<8)
 #else
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"
@@ -136,4 +144,10 @@ typedef struct Graph {
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+#define HERE_OK() printf(ANSI_COLOR_GREEN "[OK] %s:%d\n" ANSI_COLOR_RESET , __FILE__, __LINE__) //DEBUG
+
+#define V_NR_DPUS 2560
+#define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
+
 #endif // COMMON_H
+

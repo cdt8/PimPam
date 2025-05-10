@@ -384,6 +384,7 @@ void data_transfer(struct dpu_set_t set, Graph *g) {
     bitmap_t bitmap;   // bitmap of nodes put in dpu
     bitmap = malloc((size_t)(N >> 3) * NR_DPUS);
     data_allocate(bitmap);
+    
 #ifdef NO_PARTITION_AS_POSSIBLE
     if (global_g->n > DPU_N - 1 || global_g->m > DPU_M) {
 #endif
