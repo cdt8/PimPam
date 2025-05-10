@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <dpu.h>
 
-extern void data_transfer(struct dpu_set_t set, Graph *g);
+extern void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap);
 extern ans_t clique2(Graph *g, node_t root);
 extern ans_t KERNEL_FUNC(Graph *g, node_t root);
+extern Graph *global_g;
 Graph *g;
 ans_t ans[N];
 ans_t result[N];
@@ -24,7 +25,11 @@ int main() {
     printf("Selecting graph: %s\n", DATA_PATH);
     start(&timer, 0, 0);
     g = malloc(sizeof(Graph));
-    data_transfer(set, g);
+    global_g = g;
+    bitmap_t bitmap = prepare_graph(global_g);
+    data_transfer(set, g ,bitmap);
+    // assert(bitmap != NULL);
+    // free(bitmap);
     stop(&timer, 0);
     printf("Data transfer ");
     print(&timer, 0, 1);
@@ -130,6 +135,7 @@ int main() {
 #endif
     if (fine) printf(ANSI_COLOR_GREEN "All fine\n" ANSI_COLOR_RESET);
     else printf(ANSI_COLOR_RED "Some failed\n" ANSI_COLOR_RESET);
+
 
     free(g);
     DPU_ASSERT(dpu_free(set));

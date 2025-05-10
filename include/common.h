@@ -125,6 +125,7 @@ typedef struct Graph {
     uint64_t root_num[NR_DPUS];  // number of search roots allocated to dpu
     node_t *roots[NR_DPUS];
 } Graph;
+typedef uint32_t(*bitmap_t)[N >> 5];
 
 #define ALIGN(x, a) (((x) + (a)-1) & ~((a)-1))
 #define ALIGN2(x) ALIGN(x, 2)
@@ -144,10 +145,11 @@ typedef struct Graph {
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#define HERE_OK() printf(ANSI_COLOR_GREEN "[OK] %s:%d\n" ANSI_COLOR_RESET , __FILE__, __LINE__) //DEBUG
+#define HERE_OK() printf(ANSI_COLOR_GREEN "[OK] %s:%d\n" ANSI_COLOR_RESET , __FILE__, __LINE__); //DEBUG
 
 #define V_NR_DPUS 2560
 #define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
+
 
 #endif // COMMON_H
 

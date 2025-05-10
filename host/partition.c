@@ -163,7 +163,7 @@ static inline bool check_in_bitmap(node_t n, uint32_t bitmap[N >> 5]) {
     return bitmap[n >> 5] & (1 << (n & 31));
 }
 
-typedef uint32_t(*bitmap_t)[N >> 5];
+
 static bool update_alloc_info(uint32_t dpu_id, node_t n, edge_ptr *m_count, bitmap_t bitmap) {
     // check condition
     if (global_g->root_num[dpu_id] == DPU_ROOT_NUM) {
@@ -377,22 +377,8 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
     free(dpu_roots);
 }
 
-void data_transfer(struct dpu_set_t set, Graph *g) {
-    global_g = g;
-    read_input();
-    data_renumber();
-    bitmap_t bitmap;   // bitmap of nodes put in dpu
-    bitmap = malloc((size_t)(N >> 3) * NR_DPUS);
-    data_allocate(bitmap);
-    
-#ifdef NO_PARTITION_AS_POSSIBLE
-    if (global_g->n > DPU_N - 1 || global_g->m > DPU_M) {
-#endif
-        data_compact(set, bitmap);
-#ifdef NO_PARTITION_AS_POSSIBLE
-    }
-    else {
-        struct dpu_set_t dpu;
+void data_xfer(struct dpu_set_t set, bitmap_t bitmap) {
+       struct dpu_set_t dpu;
         uint32_t each_dpu;
 
         DPU_ASSERT(dpu_load(set, DPU_BINARY, NULL));
@@ -416,7 +402,28 @@ void data_transfer(struct dpu_set_t set, Graph *g) {
             DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->col_idx));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, ALIGN8(global_g->m * sizeof(node_t)), DPU_XFER_DEFAULT));
+}
+
+bitmap_t prepare_graph(Graph *g) {
+    read_input();        
+    data_renumber();     
+    bitmap_t bitmap = malloc(sizeof(uint32_t) * (N >> 5) * NR_DPUS);
+    data_allocate(bitmap);  
+    return bitmap;
+}
+
+
+void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap) {
+    
+#ifdef NO_PARTITION_AS_POSSIBLE
+    if (global_g->n > DPU_N - 1 || global_g->m > DPU_M) {
+#endif
+        data_compact(set, bitmap);
+#ifdef NO_PARTITION_AS_POSSIBLE
+    }
+    else {
+        data_xfer(set, bitmap);
     }
 #endif
-    free(bitmap);
+
 }
