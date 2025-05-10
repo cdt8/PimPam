@@ -117,13 +117,22 @@
 #define BRANCH_LEVEL_THRESHOLD 16
 #define PARTITION_M ((1<<22)/sizeof(node_t))
 
+#define V_NR_DPUS 2560
+#define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
+#ifdef V_NR_DPUS
+#define EF_NR_DPUS V_NR_DPUS
+#else
+#define EF_NR_DPUS NR_DPUS
+#endif
+
+
 typedef struct Graph {
     node_t n;  // number of vertices
     edge_ptr m;  // number of edges
     edge_ptr row_ptr[N];
     node_t col_idx[M];
-    uint64_t root_num[NR_DPUS];  // number of search roots allocated to dpu
-    node_t *roots[NR_DPUS];
+    uint64_t root_num[EF_NR_DPUS];  // number of search roots allocated to dpu
+    node_t *roots[EF_NR_DPUS];
 } Graph;
 typedef uint32_t(*bitmap_t)[N >> 5];
 
@@ -146,10 +155,8 @@ typedef uint32_t(*bitmap_t)[N >> 5];
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 #define HERE_OK() printf(ANSI_COLOR_GREEN "[OK] %s:%d\n" ANSI_COLOR_RESET , __FILE__, __LINE__); //DEBUG
-
-#define V_NR_DPUS 2560
-#define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
-
+#define HERE_OKF(fmt, ...) \
+    printf(ANSI_COLOR_GREEN "[OK] %s:%d - " fmt "\n" ANSI_COLOR_RESET, __FILE__, __LINE__, ##__VA_ARGS__);
 
 #endif // COMMON_H
 

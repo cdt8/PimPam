@@ -199,12 +199,12 @@ void push_to_queue(uint32_t dpu_id, double work_load);
 uint32_t pop_from_queue();
 
 static void data_allocate(bitmap_t bitmap) {
-    static edge_ptr m_count[NR_DPUS];   // edges put in dpu
+    static edge_ptr m_count[EF_NR_DPUS];   // edges put in dpu
     static node_t allocate_rank[N];
-    static double dpu_workload[NR_DPUS];
+    static double dpu_workload[EF_NR_DPUS];
 
-    memset(bitmap, 0, (size_t)(N >> 3) * NR_DPUS);
-    for (uint32_t i = 0; i < NR_DPUS; i++) {
+    memset(bitmap, 0, (size_t)(N >> 3) * EF_NR_DPUS);
+    for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
         global_g->root_num[i] = 0;
         global_g->roots[i] = malloc(DPU_ROOT_NUM * sizeof(node_t));
     }
@@ -220,7 +220,7 @@ static void data_allocate(bitmap_t bitmap) {
     queue_init();
     uint32_t full_dpu_ct = 0;
     for (node_t i = 0; i < global_g->n; i++) {
-        while (full_dpu_ct != NR_DPUS) {
+        while (full_dpu_ct != EF_NR_DPUS) {
             uint32_t cur_dpu = pop_from_queue();
             if (update_alloc_info(cur_dpu, allocate_rank[i], m_count, bitmap)) {
                 dpu_workload[cur_dpu] += workload[allocate_rank[i]];
@@ -231,21 +231,168 @@ static void data_allocate(bitmap_t bitmap) {
                 full_dpu_ct++;
             }
         }
-        if (full_dpu_ct == NR_DPUS) {
+        if (full_dpu_ct == EF_NR_DPUS) {
             printf(ANSI_COLOR_RED "Error: not enough DPUs\n" ANSI_COLOR_RESET);
             exit(1);
         }
     }
 }
 
-void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
+// //origin compact
+// void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
+//     edge_ptr(*dpu_row_ptr)[DPU_N * 2];
+//     dpu_row_ptr = malloc(NR_DPUS * DPU_N * 2 * sizeof(edge_ptr));
+//     node_t(*dpu_col_idx)[DPU_M * 2];
+//     dpu_col_idx = malloc(NR_DPUS * DPU_M * 2 * sizeof(node_t));
+//     node_t(*dpu_roots)[DPU_ROOT_NUM];
+//     dpu_roots = malloc(NR_DPUS * DPU_ROOT_NUM * sizeof(node_t));
+
+//     struct dpu_set_t dpu;
+//     uint32_t each_dpu;
+//     DPU_ASSERT(dpu_load(set, DPU_ALLOC_BINARY, NULL));
+
+//     uint64_t mode = 0;
+//     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, bitmap[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "bitmap", 0, (N >> 5) * sizeof(uint32_t), DPU_XFER_DEFAULT));
+//     static uint32_t zero[N >> 5];
+//     memset(zero, 0, sizeof(zero));
+//     DPU_ASSERT(dpu_broadcast_to(set, "involve_bitmap", 0, zero, sizeof(zero), DPU_XFER_DEFAULT));
+//     uint64_t start = 0;
+//     while (start < global_g->n) {
+//         uint64_t size = 0;
+//         while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
+//             size++;
+//         }
+//         DPU_ASSERT(dpu_broadcast_to(set, "start", 0, &start, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "size", 0, &size, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "row_ptr", 0, &global_g->row_ptr[start], ALIGN8((size + 1) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "col_idx", 0, &global_g->col_idx[global_g->row_ptr[start]], ALIGN8((global_g->row_ptr[start + size] - global_g->row_ptr[start]) * sizeof(node_t)), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
+//         start += size;
+//     }
+
+//     mode = 1;
+//     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//     uint64_t n_size = global_g->n;
+//     DPU_ASSERT(dpu_broadcast_to(set, "size", 0, &n_size, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         uint64_t root_num = global_g->root_num[each_dpu];
+//         DPU_ASSERT(dpu_copy_to(dpu, "root_size", 0, &root_num, sizeof(uint64_t)));
+//     }
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "roots", 0, DPU_ROOT_NUM * sizeof(node_t), DPU_XFER_DEFAULT));
+//     DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, dpu_roots[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_FROM_DPU, "roots", 0, DPU_ROOT_NUM * sizeof(node_t), DPU_XFER_DEFAULT));
+
+//     mode = 2;
+//     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//     static uint64_t processed_row_size[NR_DPUS];
+//     memset(processed_row_size, 0, NR_DPUS * sizeof(uint64_t));
+//     static uint64_t processed_col_size[NR_DPUS];
+//     memset(processed_col_size, 0, NR_DPUS * sizeof(uint64_t));
+//     static uint64_t tmp_row_size[NR_DPUS];
+//     static uint64_t tmp_col_size[NR_DPUS];
+//     start = 0;
+//     while (start < global_g->n) {
+//         uint64_t size = 0;
+//         while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
+//             size++;
+//         }
+//         DPU_ASSERT(dpu_broadcast_to(set, "start", 0, &start, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "size", 0, &size, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_FOREACH(set, dpu, each_dpu) {
+//             DPU_ASSERT(dpu_prepare_xfer(dpu, &processed_col_size[each_dpu]));
+//         }
+//         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "processed_offset", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "row_ptr", 0, &global_g->row_ptr[start], ALIGN8((size + 1) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_broadcast_to(set, "col_idx", 0, &global_g->col_idx[global_g->row_ptr[start]], ALIGN8((global_g->row_ptr[start + size] - global_g->row_ptr[start]) * sizeof(node_t)), DPU_XFER_DEFAULT));
+//         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
+//         DPU_FOREACH(set, dpu, each_dpu) {
+//             DPU_ASSERT(dpu_prepare_xfer(dpu, &tmp_row_size[each_dpu]));
+//         }
+//         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_FROM_DPU, "processed_row_size", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         DPU_FOREACH(set, dpu, each_dpu) {
+//             DPU_ASSERT(dpu_prepare_xfer(dpu, &tmp_col_size[each_dpu]));
+//         }
+//         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_FROM_DPU, "processed_col_size", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
+//         uint64_t max_row_size = 0;
+//         uint64_t max_col_size = 0;
+//         DPU_FOREACH(set, dpu, each_dpu) {
+//             if (tmp_row_size[each_dpu] > max_row_size) {
+//                 max_row_size = tmp_row_size[each_dpu];
+//             }
+//             if (tmp_col_size[each_dpu] > max_col_size) {
+//                 max_col_size = tmp_col_size[each_dpu];
+//             }
+//         }
+//         if (max_row_size != 0) {
+//             DPU_FOREACH(set, dpu, each_dpu) {
+//                 DPU_ASSERT(dpu_prepare_xfer(dpu, &dpu_row_ptr[each_dpu][processed_row_size[each_dpu]]));
+//             }
+//             DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_FROM_DPU, "processed_row_ptr", 0, ALIGN8(max_row_size * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
+//         }
+//         if (max_col_size != 0) {
+//             DPU_FOREACH(set, dpu, each_dpu) {
+//                 DPU_ASSERT(dpu_prepare_xfer(dpu, &dpu_col_idx[each_dpu][processed_col_size[each_dpu]]));
+//             }
+//             DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_FROM_DPU, "processed_col_idx", 0, ALIGN8(max_col_size * sizeof(node_t)), DPU_XFER_DEFAULT));
+//         }
+//         DPU_FOREACH(set, dpu, each_dpu) {
+//             processed_row_size[each_dpu] += tmp_row_size[each_dpu];
+//             processed_col_size[each_dpu] += tmp_col_size[each_dpu];
+//         }
+//         start += size;
+//     }
+//     for (uint32_t i = 0; i < NR_DPUS; i++) {
+//         dpu_row_ptr[i][processed_row_size[i]] = processed_col_size[i];
+//     }
+
+//     DPU_ASSERT(dpu_load(set, DPU_BINARY, NULL));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         uint64_t root_num = global_g->root_num[each_dpu];
+//         DPU_ASSERT(dpu_copy_to(dpu, "root_num", 0, &root_num, sizeof(uint64_t)));
+//     }
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, dpu_roots[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "roots", 0, DPU_ROOT_NUM * sizeof(node_t), DPU_XFER_DEFAULT));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, dpu_row_ptr[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "row_ptr", 0, DPU_N * sizeof(edge_ptr), DPU_XFER_DEFAULT));
+//     DPU_FOREACH(set, dpu, each_dpu) {
+//         DPU_ASSERT(dpu_prepare_xfer(dpu, dpu_col_idx[each_dpu]));
+//     }
+//     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, DPU_M * sizeof(node_t), DPU_XFER_DEFAULT));
+
+//     free(dpu_row_ptr);
+//     free(dpu_col_idx);
+//     free(dpu_roots);
+// }
+
+//rCSR format
+void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
     edge_ptr(*dpu_row_ptr)[DPU_N * 2];
     dpu_row_ptr = malloc(NR_DPUS * DPU_N * 2 * sizeof(edge_ptr));
     node_t(*dpu_col_idx)[DPU_M * 2];
     dpu_col_idx = malloc(NR_DPUS * DPU_M * 2 * sizeof(node_t));
     node_t(*dpu_roots)[DPU_ROOT_NUM];
     dpu_roots = malloc(NR_DPUS * DPU_ROOT_NUM * sizeof(node_t));
-
+    static uint64_t processed_row_size[NR_DPUS];
+    memset(processed_row_size, 0, NR_DPUS * sizeof(uint64_t));
+    static uint64_t processed_col_size[NR_DPUS];
+    memset(processed_col_size, 0, NR_DPUS * sizeof(uint64_t));
+    static uint64_t tmp_row_size[NR_DPUS];
+    static uint64_t tmp_col_size[NR_DPUS];
+    
     struct dpu_set_t dpu;
     uint32_t each_dpu;
     DPU_ASSERT(dpu_load(set, DPU_ALLOC_BINARY, NULL));
@@ -253,7 +400,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
     uint64_t mode = 0;
     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
     DPU_FOREACH(set, dpu, each_dpu) {
-        DPU_ASSERT(dpu_prepare_xfer(dpu, bitmap[each_dpu]));
+        DPU_ASSERT(dpu_prepare_xfer(dpu, bitmap[each_dpu+base]));
     }
     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "bitmap", 0, (N >> 5) * sizeof(uint32_t), DPU_XFER_DEFAULT));
     static uint32_t zero[N >> 5];
@@ -278,11 +425,11 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
     uint64_t n_size = global_g->n;
     DPU_ASSERT(dpu_broadcast_to(set, "size", 0, &n_size, sizeof(uint64_t), DPU_XFER_DEFAULT));
     DPU_FOREACH(set, dpu, each_dpu) {
-        uint64_t root_num = global_g->root_num[each_dpu];
+        uint64_t root_num = global_g->root_num[each_dpu+base];
         DPU_ASSERT(dpu_copy_to(dpu, "root_size", 0, &root_num, sizeof(uint64_t)));
     }
     DPU_FOREACH(set, dpu, each_dpu) {
-        DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu]));
+        DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu+base]));
     }
     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "roots", 0, DPU_ROOT_NUM * sizeof(node_t), DPU_XFER_DEFAULT));
     DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
@@ -293,12 +440,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
 
     mode = 2;
     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
-    static uint64_t processed_row_size[NR_DPUS];
-    memset(processed_row_size, 0, NR_DPUS * sizeof(uint64_t));
-    static uint64_t processed_col_size[NR_DPUS];
-    memset(processed_col_size, 0, NR_DPUS * sizeof(uint64_t));
-    static uint64_t tmp_row_size[NR_DPUS];
-    static uint64_t tmp_col_size[NR_DPUS];
+
     start = 0;
     while (start < global_g->n) {
         uint64_t size = 0;
@@ -356,7 +498,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
 
     DPU_ASSERT(dpu_load(set, DPU_BINARY, NULL));
     DPU_FOREACH(set, dpu, each_dpu) {
-        uint64_t root_num = global_g->root_num[each_dpu];
+        uint64_t root_num = global_g->root_num[each_dpu+base];
         DPU_ASSERT(dpu_copy_to(dpu, "root_num", 0, &root_num, sizeof(uint64_t)));
     }
     DPU_FOREACH(set, dpu, each_dpu) {
@@ -377,21 +519,21 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap) {
     free(dpu_roots);
 }
 
-void data_xfer(struct dpu_set_t set, bitmap_t bitmap) {
+void data_xfer(struct dpu_set_t set,int base) {
        struct dpu_set_t dpu;
         uint32_t each_dpu;
 
         DPU_ASSERT(dpu_load(set, DPU_BINARY, NULL));
         node_t max_root_num = 0;
         DPU_FOREACH(set, dpu, each_dpu) {
-            DPU_ASSERT(dpu_prepare_xfer(dpu, &global_g->root_num[each_dpu]));
-            if(global_g->root_num[each_dpu] > max_root_num) {
-                max_root_num = global_g->root_num[each_dpu];
+            DPU_ASSERT(dpu_prepare_xfer(dpu, &global_g->root_num[each_dpu+base]));
+            if(global_g->root_num[each_dpu+base] > max_root_num) {
+                max_root_num = global_g->root_num[each_dpu+base];
             }
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "root_num", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
         DPU_FOREACH(set, dpu, each_dpu) {
-            DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu]));
+            DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu+base]));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "roots", 0, ALIGN8(max_root_num * sizeof(node_t)), DPU_XFER_DEFAULT));
         DPU_FOREACH(set, dpu, each_dpu) {
@@ -407,22 +549,22 @@ void data_xfer(struct dpu_set_t set, bitmap_t bitmap) {
 bitmap_t prepare_graph(Graph *g) {
     read_input();        
     data_renumber();     
-    bitmap_t bitmap = malloc(sizeof(uint32_t) * (N >> 5) * NR_DPUS);
+    bitmap_t bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap);  
     return bitmap;
 }
 
 
-void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap) {
+void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base) {
     
 #ifdef NO_PARTITION_AS_POSSIBLE
     if (global_g->n > DPU_N - 1 || global_g->m > DPU_M) {
 #endif
-        data_compact(set, bitmap);
+        data_compact(set, bitmap,base);
 #ifdef NO_PARTITION_AS_POSSIBLE
     }
     else {
-        data_xfer(set, bitmap);
+        data_xfer(set,base);
     }
 #endif
 

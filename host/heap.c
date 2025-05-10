@@ -6,14 +6,14 @@ typedef struct ElementType {
 } ElementType;
 
 uint32_t queue_size;
-ElementType Elements[NR_DPUS];
+ElementType Elements[EF_NR_DPUS];
 
 void queue_init() {
-    for (uint32_t i = 0; i < NR_DPUS; i++) {
+    for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
         Elements[i].dpu_id = i;
         Elements[i].workload = 0;
     }
-    queue_size = NR_DPUS;
+    queue_size = EF_NR_DPUS;
 }
 
 void push_to_queue(uint32_t dpu_id, double workload) {
