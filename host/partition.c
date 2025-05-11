@@ -411,7 +411,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
     DPU_ASSERT(dpu_broadcast_to(set, "involve_bitmap", 0, zero, sizeof(zero), DPU_XFER_DEFAULT));
     uint64_t start = 0;
     while (start < global_g->n) {
-            HERE_OKF("initialize ok");
+            //HERE_OKF("initialize ok");
         uint64_t size = 0;
         while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
             size++;
@@ -424,7 +424,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
         start += size;
     }
 
-    HERE_OKF("mode 0 ok");
+    HERE_OKF("data_compact ok");
 
     mode = 1;
     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));

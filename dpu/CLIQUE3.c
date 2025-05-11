@@ -1,5 +1,10 @@
 #include <dpu_mine.h>
 
+static ans_t partial_ans[NR_TASKLETS];
+static uint64_t partial_cycle[NR_TASKLETS];
+static perfcounter_cycles cycles[NR_TASKLETS];
+static perfcounter_cycles dc_cycles[NR_TASKLETS];
+
 #ifdef BITMAP
 static ans_t __imp_clique3_bitmap(sysname_t tasklet_id, node_t second_index) {
     ans_t ans = 0;
@@ -22,8 +27,12 @@ static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, node_t second_ro
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
+
+timer_start(&dc_cycles[tasklet_id]);
     node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
-    ans += common_size;
+dc_cycle_ct[1][tasklet_id] += timer_stop(&dc_cycles[tasklet_id]);  // intended DMA
+    
+ans += common_size;
     return ans;
 }
 
@@ -40,9 +49,6 @@ static ans_t __imp_clique3(sysname_t tasklet_id, node_t root) {
 }
 
 extern void clique3(sysname_t tasklet_id) {
-    static ans_t partial_ans[NR_TASKLETS];
-    static uint64_t partial_cycle[NR_TASKLETS];
-    static perfcounter_cycles cycles[NR_TASKLETS];
 
     node_t i = 0;
     while (i < root_num) {
@@ -66,7 +72,9 @@ extern void clique3(sysname_t tasklet_id) {
             node_t second_root = col_idx[j];  // intended DMA
             if (second_root >= root) break;
 #ifdef BITMAP
+timer_start(&dc_cycles[tasklet_id]);
             partial_ans[tasklet_id] += __imp_clique3_bitmap(tasklet_id, j - root_begin);
+dc_cycle_ct[1][tasklet_id] += timer_stop(&dc_cycles[tasklet_id]);  // intended DMA
 #else
             partial_ans[tasklet_id] += __imp_clique3_2(tasklet_id, root, second_root);
 #endif

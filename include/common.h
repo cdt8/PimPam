@@ -125,7 +125,8 @@
 #define EF_NR_DPUS NR_DPUS
 #endif
 
-
+#define DC //detailed cycle count
+#define DC_NUM 3 //number of cycle count list
 typedef struct Graph {
     node_t n;  // number of vertices
     edge_ptr m;  // number of edges
