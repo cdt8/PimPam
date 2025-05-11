@@ -50,6 +50,7 @@ extern void clique3(sysname_t tasklet_id) {
         node_t root_begin = row_ptr[root];  // intended DMA
         node_t root_end = row_ptr[root + 1];  // intended DMA
         if (root_end - root_begin < BRANCH_LEVEL_THRESHOLD) {
+            large_degree_num = i;
             break;
         }
 #ifdef PERF

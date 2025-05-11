@@ -6,6 +6,7 @@
 #include <dpu_types.h>
 
 Graph *global_g;
+bitmap_t bitmap;
 double workload[N];
 
 static int deg_cmp(const void *a, const void *b) {
@@ -403,11 +404,14 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
         DPU_ASSERT(dpu_prepare_xfer(dpu, bitmap[each_dpu+base]));
     }
     DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "bitmap", 0, (N >> 5) * sizeof(uint32_t), DPU_XFER_DEFAULT));
+
     static uint32_t zero[N >> 5];
     memset(zero, 0, sizeof(zero));
+
     DPU_ASSERT(dpu_broadcast_to(set, "involve_bitmap", 0, zero, sizeof(zero), DPU_XFER_DEFAULT));
     uint64_t start = 0;
     while (start < global_g->n) {
+            HERE_OKF("initialize ok");
         uint64_t size = 0;
         while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
             size++;
@@ -419,6 +423,8 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
         start += size;
     }
+
+    HERE_OKF("mode 0 ok");
 
     mode = 1;
     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
@@ -546,10 +552,10 @@ void data_xfer(struct dpu_set_t set,int base) {
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, ALIGN8(global_g->m * sizeof(node_t)), DPU_XFER_DEFAULT));
 }
 
-bitmap_t prepare_graph(Graph *g) {
+bitmap_t prepare_graph() {
     read_input();        
     data_renumber();     
-    bitmap_t bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
+    bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap);  
     return bitmap;
 }

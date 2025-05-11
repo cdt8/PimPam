@@ -23,6 +23,8 @@ uint32_t bitmap[NR_TASKLETS * 3][BITMAP_SIZE];  // 12K
 __mram_noinit uint32_t mram_bitmap[BITMAP_SIZE << 5][BITMAP_SIZE];  // 256K
 #endif
 
+__host node_t large_degree_num;  //Number of nodes(degree>=16)
+
 // synchronization
 BARRIER_INIT(co_barrier, NR_TASKLETS);
 

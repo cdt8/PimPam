@@ -8,12 +8,14 @@ extern void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap,int ba
 extern ans_t clique2(Graph *g, node_t root);
 extern ans_t KERNEL_FUNC(Graph *g, node_t root);
 extern Graph *global_g;
+extern bitmap_t bitmap;
 Graph *g;
 ans_t ans[N];
 ans_t result[N];
 Timer timer;
 uint64_t cycle_ct[N];
 uint64_t cycle_ct_dpu[EF_NR_DPUS][NR_TASKLETS];
+node_t large_degree_num[EF_NR_DPUS];
 
 int main() {
     printf("NR_DPUS: %u, NR_TASKLETS: %u, DPU_BINARY: %s, PATTERN: %s\n", NR_DPUS, NR_TASKLETS, DPU_BINARY, PATTERN_NAME);
@@ -26,7 +28,8 @@ int main() {
     start(&timer, 0, 0);
     g = malloc(sizeof(Graph));
     global_g = g;
-    bitmap_t bitmap = prepare_graph(global_g);
+    //bitmap=prepare_graph(); //bug not reslove
+    prepare_graph();
     stop(&timer, 0);
     printf("Data prepare ");
     print(&timer, 0, 1);
@@ -48,8 +51,6 @@ for(int index=0;index<batch_count;index++){
     base = index * NR_DPUS;
 #endif
     data_transfer(set,g,bitmap,base);
-    // assert(bitmap != NULL);
-    // free(bitmap);
 
     // run it on DPU
     DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
@@ -82,6 +83,7 @@ for(int index=0;index<batch_count;index++){
 #ifdef PERF
         uint64_t *dpu_cycle_ct = (uint64_t *)malloc(ALIGN8(g->root_num[each_dpu+base] * sizeof(uint64_t)));
         DPU_ASSERT(dpu_copy_from(dpu, "cycle_ct", 0, dpu_cycle_ct, ALIGN8(g->root_num[each_dpu+base] * sizeof(uint64_t))));
+        DPU_ASSERT(dpu_copy_from(dpu, "large_degree_num", 0, large_degree_num[each_dpu+base], sizeof(node_t)));
         for (node_t k = 0, cur_thread = 0; k < g->root_num[each_dpu+base]; k++) {
             node_t cur_root = g->roots[each_dpu+base][k];
             cycle_ct[cur_root] = dpu_cycle_ct[k];
@@ -127,9 +129,15 @@ for(int index=0;index<batch_count;index++){
             fprintf(fp, "DPU: %u, tasklet: %u, cycle: %lu, root_num: %lu\n", i, j, cycle_ct_dpu[i][j], g->root_num[i]);
         }
     }
+for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
+        float ratio = (float)large_degree_num[i] / g->root_num[i];
+        fprintf(fp, "DPU: %u, large_degree_num: %u, root_num: %lu, ratio: %.2f\n",i, large_degree_num[i], g->root_num[i], ratio);
+}
+
     fclose(fp);
 #endif
-
+    assert(bitmap != NULL);
+    free(bitmap);
     free(g);
     DPU_ASSERT(dpu_free(set));
     return 0;
