@@ -39,7 +39,7 @@
 #define N (1<<22)
 #define M (1<<26)
 #elif defined(LJ)
-#define DATA_NAME "soc-LiveJournall"
+#define DATA_NAME "soc-LiveJournal1"
 #define N (1<<23)
 #define M (1<<27)
 #elif defined(PA)
@@ -50,7 +50,12 @@
 #define DATA_NAME "simple_csr_graph"
 #define N (1<<6)
 #define M (1<<8)
+#elif defined(TH)
+#define DATA_NAME "Theory-3-4-5-9-B1k"
+#define N (1<<12)
+#define M (1<<14)
 #else
+
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"
 #define N (1<<14)
@@ -117,8 +122,8 @@
 #define BRANCH_LEVEL_THRESHOLD 16
 #define PARTITION_M ((1<<22)/sizeof(node_t))
 
-#define V_NR_DPUS 2560
-#define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
+// #define V_NR_DPUS 2560
+// #define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
 #ifdef V_NR_DPUS
 #define EF_NR_DPUS V_NR_DPUS
 #else

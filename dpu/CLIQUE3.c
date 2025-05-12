@@ -51,6 +51,7 @@ static ans_t __imp_clique3(sysname_t tasklet_id, node_t root) {
 extern void clique3(sysname_t tasklet_id) {
 
     node_t i = 0;
+    large_degree_num = root_num; //if all node is large_degree
     while (i < root_num) {
         node_t root = roots[i];  // intended DMA
         node_t root_begin = row_ptr[root];  // intended DMA

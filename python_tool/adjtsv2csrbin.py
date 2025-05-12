@@ -60,7 +60,7 @@ def main():
 
     # 自动推导输出路径（如果未指定）
     if args.output is None:
-        if args.input.endswith('.tsv'):
+        if args.input.endswith('.tsv') or args.input.endswith('.txt'):
             args.output = args.input[:-4] + '.bin'
         else:
             args.output = args.input + '.bin'

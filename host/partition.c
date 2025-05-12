@@ -285,7 +285,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
         start += size;
     }
 
-    HERE_OKF("data_compact ok");
+
 
     mode = 1;
     DPU_ASSERT(dpu_broadcast_to(set, "mode", 0, &mode, sizeof(uint64_t), DPU_XFER_DEFAULT));
@@ -384,6 +384,7 @@ void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
     free(dpu_row_ptr);
     free(dpu_col_idx);
     free(dpu_roots);
+
 }
 
 void data_xfer(struct dpu_set_t set,int base) {
@@ -428,6 +429,7 @@ void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base) {
     if (global_g->n > DPU_N - 1 || global_g->m > DPU_M) {
 #endif
         data_compact(set, bitmap,base);
+        HERE_OKF("data_compact ok");
 #ifdef NO_PARTITION_AS_POSSIBLE
     }
     else {
