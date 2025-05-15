@@ -149,7 +149,7 @@ static void data_renumber() {
         renumbered[rank[i]] = i;
     }
     edge_ptr cur = 0;
-    for (node_t i = 0; i < global_g->n; i++) {
+    for (node_t i = 0; i < global_g->n; i++) { 
         global_g->row_ptr[i] = cur;
         node_t node = rank[i];
         for (edge_ptr j = tmp_g->row_ptr[node]; j < tmp_g->row_ptr[node + 1]; j++) {
@@ -415,7 +415,7 @@ void data_xfer(struct dpu_set_t set,int base) {
 }
 
 bitmap_t prepare_graph() {
-    read_input();        
+    read_input();  
     data_renumber();     
     bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap);  
@@ -433,6 +433,7 @@ void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base) {
 #ifdef NO_PARTITION_AS_POSSIBLE
     }
     else {
+
         data_xfer(set,base);
     }
 #endif

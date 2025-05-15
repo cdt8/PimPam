@@ -4,6 +4,7 @@ matplotlib.use('Agg')  # 无图形界面兼容
 import matplotlib.pyplot as plt
 import os
 import sys
+from datetime import datetime
 
 def parse_dpu_cycles(file_path):
     # 模式1：tasklet 级别的时间信息
@@ -37,6 +38,23 @@ def parse_dpu_cycles(file_path):
                 dpu_data[dpu]['ratio'] = float(ratio)
 
     return dpu_data
+
+def get_unique_filename(base_path):
+    """生成唯一的文件名，格式为: base_YYYYMMDD_HHMMSS_N.png"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name, ext = os.path.splitext(base_path)
+    
+    # 检查是否存在带时间戳的文件，如果存在则增加序号
+    counter = 1
+    while True:
+        if counter == 1:
+            new_path = f"{base_name}_{timestamp}{ext}"
+        else:
+            new_path = f"{base_name}_{timestamp}_{counter}{ext}"
+        
+        if not os.path.exists(new_path):
+            return new_path
+        counter += 1
 
 def plot_dpu_metrics_bar(dpu_data, output_path):
     if not dpu_data:
@@ -80,8 +98,12 @@ def plot_dpu_metrics_bar(dpu_data, output_path):
     plt.legend(fontsize=10)
 
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+    
+    # 获取唯一文件名并保存
+    unique_output_path = get_unique_filename(output_path)
+    plt.savefig(unique_output_path, dpi=300)
     plt.close()
+    return unique_output_path
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -93,7 +115,8 @@ if __name__ == '__main__':
         print(f"错误：文件 '{input_file}' 不存在。")
         sys.exit(1)
 
-    output_file = os.path.splitext(input_file)[0] + "_detailed.png"
+    # 原始输出路径（会自动添加时间戳）
+    base_output_file = os.path.splitext(input_file)[0] + "_detailed.png"
     dpu_data = parse_dpu_cycles(input_file)
-    plot_dpu_metrics_bar(dpu_data, output_file)
-    print(f"图像已保存至: {output_file}")
+    saved_path = plot_dpu_metrics_bar(dpu_data, base_output_file)
+    print(f"图像已保存至: {saved_path}")

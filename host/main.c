@@ -34,6 +34,7 @@ int main() {
     global_g = g;
     //bitmap=prepare_graph(); //bug not reslove
     prepare_graph();
+ 
     stop(&timer, 0);
     printf("Data prepare ");
     print(&timer, 0, 1);
@@ -131,14 +132,22 @@ for(int index=0;index<batch_count;index++){
     FILE *fp = fopen("./result/" PATTERN_NAME "_" DATA_NAME ".txt", "w");
     fprintf(fp, "NR_DPUS: %u, NR_TASKLETS: %u, DPU_BINARY: %s, PATTERN: %s\n", NR_DPUS, NR_TASKLETS, DPU_BINARY, PATTERN_NAME);
     fprintf(fp, "N: %u, M: %u, avg_deg: %f\n", g->n, g->m, (double)g->m / g->n);
+
     // for (node_t i = 0; i < g->n; i++) {
     //     fprintf(fp, "node: %u, deg: %u, o_deg: %lu, ans: %lu, cycle: %lu,\n", i, g->row_ptr[i + 1] - g->row_ptr[i], clique2(g, i), result[i], cycle_ct[i]);
     // }
+
     for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
         for (uint32_t j = 0; j < NR_TASKLETS; j++) {
+            #ifdef DC //detailed cycle count
             fprintf(fp, "DPU: %u, tasklet: %u, I_cycle: %lu, total_cycle: %lu, root_num: %lu\n", i, j,dc_cycle_ct_dpu[i][1][j],cycle_ct_dpu[i][j], g->root_num[i]);
+            #else
+            fprintf(fp, "DPU: %u, tasklet: %u, cycle: %lu, root_num: %lu\n", i, j, cycle_ct_dpu[i][j], g->root_num[i]);
+
+    #endif
         }
     }
+
 for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
         float ratio = (float)large_degree_num[i] / g->root_num[i];
         fprintf(fp, "DPU: %u, large_degree_num: %u, root_num: %lu, ratio: %.2f\n",i, large_degree_num[i], g->root_num[i], ratio);

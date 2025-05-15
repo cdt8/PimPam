@@ -7,9 +7,9 @@
 #define PERF
 // #define DPU_LOG
 // #define CPU_RUN
-#define NO_PARTITION_AS_POSSIBLE
+// #define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
-#if defined(CLIQUE4) || defined(CLIQUE5) || defined(CLIQUE3)
+#if defined(CLIQUE4) || defined(CLIQUE5) 
 #define BITMAP
 #endif
 
@@ -54,6 +54,10 @@
 #define DATA_NAME "Theory-3-4-5-9-B1k"
 #define N (1<<12)
 #define M (1<<14)
+#elif defined(FE)
+#define DATA_NAME "flickrEdges_adj"
+#define N (1<<17)
+#define M (1<<23)
 #else
 
 #warning "No graph selected, fall back to PP."
@@ -122,16 +126,17 @@
 #define BRANCH_LEVEL_THRESHOLD 16
 #define PARTITION_M ((1<<22)/sizeof(node_t))
 
-// #define V_NR_DPUS 2560
-// #define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
+// #define DC //detailed cycle count
+// #define DC_NUM 3 //number of cycle count list
+#define V_NR_DPUS 2560
+#define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
 #ifdef V_NR_DPUS
 #define EF_NR_DPUS V_NR_DPUS
 #else
 #define EF_NR_DPUS NR_DPUS
 #endif
 
-#define DC //detailed cycle count
-#define DC_NUM 3 //number of cycle count list
+
 typedef struct Graph {
     node_t n;  // number of vertices
     edge_ptr m;  // number of edges
