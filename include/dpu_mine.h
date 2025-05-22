@@ -16,7 +16,7 @@ __mram_noinit uint64_t cycle_ct[DPU_ROOT_NUM];   // 2M
 
 // buffer
 node_t buf[NR_TASKLETS][3][BUF_SIZE];  // 6K
-__mram_noinit node_t mram_buf[NR_TASKLETS << 2][MRAM_BUF_SIZE];  // <=16M
+__mram_noinit node_t mram_buf[NR_TASKLETS << 2][MRAM_BUF_SIZE];  // 8M <= 16M
 
 #ifdef BITMAP
 uint32_t bitmap_size;

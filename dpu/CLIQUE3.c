@@ -22,7 +22,6 @@ static ans_t __imp_clique3_bitmap(sysname_t tasklet_id, node_t second_index) {
 static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, edge_ptr root_begin, edge_ptr root_end,node_t second_root) {
 
     node_t(*tasklet_buf)[BUF_SIZE] = buf[tasklet_id];
-
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
@@ -33,16 +32,15 @@ static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, edge_ptr root_be
 #endif
 
 #ifdef NO_RUN   //test cycle without Intersection operation 
-    node_t common_size = intersect_seq_buf_thresh_not_run(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+    //node_t common_size = intersect_seq_buf_thresh_not_run(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+    node_t ans = 0;
 #else
-    node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+    node_t ans = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
 #endif
 
 #ifdef DC
     dc_cycle_ct[1][tasklet_id] +=timer_stop(&dc_cycles[tasklet_id]);  // intended DMA
 #endif  
-
-ans += common_size;
   
     return ans;
 }
