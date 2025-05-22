@@ -58,8 +58,23 @@
 #define DATA_NAME "flickrEdges_adj"
 #define N (1<<17)
 #define M (1<<23)
+#elif defined(NCA)
+#define DATA_NAME "roadNet-CA_adj"
+#define N (1<<23)
+#define M (1<<25)
+#elif defined(AM0312)
+#define DATA_NAME "amazon0312_adj"
+#define N (1<<20)
+#define M (1<<23)
+#elif defined(AM0505)
+#define DATA_NAME "amazon0505_adj"
+#define N (1<<20)
+#define M (1<<23)
+#elif defined(SC18_16)
+#define DATA_NAME "graph500-scale18-ef16_adj"
+#define N (1<<20)
+#define M (1<<24)
 #else
-
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"
 #define N (1<<14)

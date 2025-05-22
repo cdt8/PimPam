@@ -118,7 +118,6 @@ extern void clique3(sysname_t tasklet_id) {
         timer_start(&cycles[tasklet_id]);
 #endif
 
-
         ans[i] = __imp_clique3(tasklet_id, root);  // intended DMA
 
 #ifdef PERF

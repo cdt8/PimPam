@@ -1,10 +1,31 @@
 #!/bin/bash
 
+# # 设置默认值（可选）
+# GRAPH="${GRAPH:-PA}"          # 如果未设置 GRAPH，则默认使用 "TH"
+# PATTERN="${PATTERN:-CLIQUE3}" # 如果未设置 PATTERN，则默认使用 "CLIQUE3"
+# LOG_FILE1="./result/clique3_roadNet-PA_adj.txt"
+# LOG_FILE2="./result/clique3_roadNet-PA_adj_NO_RUN.txt"
+
+# # 执行 make test 并传入环境变量
+# echo "Running: GRAPH=$GRAPH PATTERN=$PATTERN make test"
+# GRAPH="$GRAPH" PATTERN="$PATTERN"  make test 
+
+
+# # 设置默认值（可选）
+# GRAPH="${GRAPH:-FE}"          # 如果未设置 GRAPH，则默认使用 "TH"
+# PATTERN="${PATTERN:-CLIQUE3}" # 如果未设置 PATTERN，则默认使用 "CLIQUE3"
+# LOG_FILE1="./result/clique3_flickrEdges_adj.txt"
+# LOG_FILE2="./result/clique3_flickrEdges_adj_NO_RUN.txt"
+
+# # 执行 make test 并传入环境变量
+# echo "Running: GRAPH=$GRAPH PATTERN=$PATTERN make test"
+# GRAPH="$GRAPH" PATTERN="$PATTERN"  make test 
+
 # 设置默认值（可选）
-GRAPH="${GRAPH:-PA}"          # 如果未设置 GRAPH，则默认使用 "TH"
+GRAPH="${GRAPH:-PT}"          # 如果未设置 GRAPH，则默认使用 "TH"
 PATTERN="${PATTERN:-CLIQUE3}" # 如果未设置 PATTERN，则默认使用 "CLIQUE3"
-LOG_FILE1="./result/clique3_roadNet-PA_adj.txt"
-LOG_FILE2="./result/clique3_roadNet-PA_adj_NO_RUN.txt"
+LOG_FILE1="./result/clique3_cit-Patents.txt"
+LOG_FILE2="./result/clique3_cit-Patents_NO_RUN.txt"
 
 # 执行 make test 并传入环境变量
 echo "Running: GRAPH=$GRAPH PATTERN=$PATTERN make test"
