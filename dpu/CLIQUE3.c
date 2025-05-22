@@ -19,12 +19,10 @@ static ans_t __imp_clique3_bitmap(sysname_t tasklet_id, node_t second_index) {
 }
 #endif
 
-static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, node_t second_root) {
+static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, edge_ptr root_begin, edge_ptr root_end,node_t second_root) {
 
     node_t(*tasklet_buf)[BUF_SIZE] = buf[tasklet_id];
 
-    edge_ptr root_begin = row_ptr[root];  // intended DMA
-    edge_ptr root_end = row_ptr[root + 1];  // intended DMA
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
@@ -34,7 +32,11 @@ static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, node_t second_ro
     timer_start(&dc_cycles[tasklet_id]);
 #endif
 
+#ifdef NO_RUN   //test cycle without Intersection operation 
+    node_t common_size = intersect_seq_buf_thresh_not_run(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+#else
     node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+#endif
 
 #ifdef DC
     dc_cycle_ct[1][tasklet_id] +=timer_stop(&dc_cycles[tasklet_id]);  // intended DMA
@@ -53,7 +55,7 @@ static ans_t __imp_clique3(sysname_t tasklet_id, node_t root) {
     for (edge_ptr i = root_begin; i < root_end; i++) {
         node_t second_root = col_idx[i];  // intended DMA
         if (second_root >= root) break;
-        ans += __imp_clique3_2(tasklet_id, root, second_root);
+        ans += __imp_clique3_2(tasklet_id, root,root_begin,root_end,second_root);
     }
 
     return ans;
@@ -86,7 +88,7 @@ extern void clique3(sysname_t tasklet_id) {
 #ifdef BITMAP
             partial_ans[tasklet_id] += __imp_clique3_bitmap(tasklet_id, j - root_begin);
 #else
-            partial_ans[tasklet_id] += __imp_clique3_2(tasklet_id, root, second_root);
+            partial_ans[tasklet_id] += __imp_clique3_2(tasklet_id, root,root_begin,root_end,second_root);
 #endif
         }
 #ifdef PERF

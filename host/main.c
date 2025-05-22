@@ -129,7 +129,11 @@ for(int index=0;index<batch_count;index++){
 
     // output result to file
 #ifdef PERF
+#ifdef NO_RUN   //test cycle without Intersection operation 
+    FILE *fp = fopen("./result/" PATTERN_NAME "_" DATA_NAME "_NO_RUN.txt", "w");
+#else
     FILE *fp = fopen("./result/" PATTERN_NAME "_" DATA_NAME ".txt", "w");
+#endif
     fprintf(fp, "NR_DPUS: %u, NR_TASKLETS: %u, DPU_BINARY: %s, PATTERN: %s\n", NR_DPUS, NR_TASKLETS, DPU_BINARY, PATTERN_NAME);
     fprintf(fp, "N: %u, M: %u, avg_deg: %f\n", g->n, g->m, (double)g->m / g->n);
 

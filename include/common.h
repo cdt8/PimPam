@@ -7,7 +7,7 @@
 #define PERF
 // #define DPU_LOG
 // #define CPU_RUN
-// #define NO_PARTITION_AS_POSSIBLE
+#define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 
 #define BITMAP
@@ -126,8 +126,10 @@
 #define BRANCH_LEVEL_THRESHOLD 16
 #define PARTITION_M ((1<<22)/sizeof(node_t))
 
+
 // #define DC //detailed cycle count
 // #define DC_NUM 3 //number of cycle count list
+
 #define V_NR_DPUS 2560
 #define BATCH_SIZE (V_NR_DPUS/NR_DPUS)
 #ifdef V_NR_DPUS

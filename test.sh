@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 设置默认值（可选）
-GRAPH="${GRAPH:-FE}"          # 如果未设置 GRAPH，则默认使用 "TH"
+GRAPH="${GRAPH:-PA}"          # 如果未设置 GRAPH，则默认使用 "TH"
 PATTERN="${PATTERN:-CLIQUE3}" # 如果未设置 PATTERN，则默认使用 "CLIQUE3"
-LOG_FILE="./result/clique3_flickrEdges_adj.txt"
+LOG_FILE="./result/clique3_roadNet-PA_adj.txt"
 
 # 执行 make test 并传入环境变量
 echo "Running: GRAPH=$GRAPH PATTERN=$PATTERN make test"
-GRAPH="$GRAPH" PATTERN="$PATTERN" make test
+GRAPH="$GRAPH" PATTERN="$PATTERN"  make test 
 
 # 检查 make 是否成功
 if [ $? -ne 0 ]; then
