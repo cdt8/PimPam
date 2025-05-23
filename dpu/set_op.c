@@ -206,3 +206,4 @@ extern void intersect_bitmap(node_t *a, node_t *b, node_t *c, node_t bitmap_size
     }
 }
 #endif
+
