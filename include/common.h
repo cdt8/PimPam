@@ -7,7 +7,7 @@
 #define PERF
 // #define DPU_LOG
 // #define CPU_RUN
-//#define NO_PARTITION_AS_POSSIBLE
+#define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 
 #define BITMAP
@@ -58,6 +58,10 @@
 #define DATA_NAME "flickrEdges_adj"
 #define N (1<<17)
 #define M (1<<23)
+#elif defined(CH)
+#define DATA_NAME "cit-HepPh_adj"
+#define N (1<<18)
+#define M (1<<22)
 #elif defined(NCA)
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)
