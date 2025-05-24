@@ -411,15 +411,27 @@ void data_xfer(struct dpu_set_t set,int base) {
         DPU_FOREACH(set, dpu, each_dpu) {
             DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->col_idx));
         }
-        DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, ALIGN8(global_g->m * sizeof(node_t)), DPU_XFER_DEFAULT));
+        DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, ALIGN8(global_g->m * sizeof(node_t) * 3), DPU_XFER_DEFAULT));
 }
 
-bitmap_t prepare_graph() {
+void col_redundant()
+{
+    for (edge_ptr j = global_g->m-1;;j--) {
+        //HERE_OKF(" index %d begin...", j); 
+        node_t node = global_g->col_idx[j];
+        global_g->col_idx[3*j]=node;
+        global_g->col_idx[3*j+1]=global_g->row_ptr[node];
+        global_g->col_idx[3*j+2]=global_g->row_ptr[node+1];;
+        if(j==0)break;
+    }
+}
+
+void prepare_graph() {
     read_input();  
     data_renumber();     
     bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap);  
-    return bitmap;
+    col_redundant();
 }
 
 
@@ -433,7 +445,7 @@ void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base) {
 #ifdef NO_PARTITION_AS_POSSIBLE
     }
     else {
-
+        //if(base==0)
         data_xfer(set,base);
     }
 #endif

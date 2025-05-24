@@ -56,7 +56,6 @@ for(int index=0;index<batch_count;index++){
     base = index * NR_DPUS;
 #endif
     data_transfer(set,g,bitmap,base);
-
     // run it on DPU
     DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
 

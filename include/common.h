@@ -7,7 +7,7 @@
 #define PERF
 // #define DPU_LOG
 // #define CPU_RUN
-//#define NO_PARTITION_AS_POSSIBLE
+#define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 
 #define BITMAP
@@ -45,7 +45,11 @@
 #elif defined(PA)
 #define DATA_NAME "roadNet-PA_adj"
 #define N (1<<23)
-#define M (1<<25)
+#define M (1<<26)
+#elif defined(CH)
+#define DATA_NAME "cit-HepPh_adj"
+#define N (1<<17)
+#define M (1<<22)
 #elif defined(SP)
 #define DATA_NAME "simple_csr_graph"
 #define N (1<<6)
@@ -53,7 +57,7 @@
 #elif defined(TH)
 #define DATA_NAME "Theory-3-4-5-9-B1k"
 #define N (1<<12)
-#define M (1<<14)
+#define M (1<<16)
 #elif defined(FE)
 #define DATA_NAME "flickrEdges_adj"
 #define N (1<<17)
@@ -136,7 +140,8 @@
 #define DPU_M ((1<<25)/sizeof(node_t))
 #define DPU_ROOT_NUM ((1<<20)/sizeof(node_t))
 #define BITMAP_SIZE 32  // 1024 bits
-#define BUF_SIZE 32
+#define BUF_RSIZE 32
+#define BUF_SIZE  (BUF_RSIZE*3)
 #define MRAM_BUF_SIZE 32768
 #define BRANCH_LEVEL_THRESHOLD 16
 #define PARTITION_M ((1<<22)/sizeof(node_t))
