@@ -62,6 +62,10 @@
 #define DATA_NAME "cit-HepPh_adj"
 #define N (1<<18)
 #define M (1<<22)
+#elif defined(SS)
+#define DATA_NAME "soc-Slashdot0811_adj"
+#define N (1<<18)
+#define M (1<<22)
 #elif defined(NCA)
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)

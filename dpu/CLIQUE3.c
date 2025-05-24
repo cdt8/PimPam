@@ -31,8 +31,8 @@ static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t root, edge_ptr root_be
 #endif
 
 #ifdef NO_RUN   //test cycle without Intersection operation 
-    node_t ans = intersect_seq_buf_thresh_not_run(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
-    //node_t ans = 1;
+    //node_t ans = intersect_seq_buf_thresh_not_run(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+    node_t ans = 1;
 #else
     node_t ans = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
 #endif
