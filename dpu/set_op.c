@@ -22,13 +22,13 @@ extern node_t intersect_seq_buf_thresh(node_t (*buf)[BUF_SIZE], node_t __mram_pt
             a_size++;
         }
         
-        mram_read(a, buf, ALIGN8((a_size*3)<<SIZE_NODE_T_LOG));
-        for (; i < a_size; i=i++) {
+        mram_read(a, buf[0], ALIGN8((a_size*3)<<SIZE_NODE_T_LOG));
+        for (; i < a_size; i++) { 
             node_t a_val = buf[0][3*i];
             if (a_val >= threshold) break;
             node_t l = 0, r = b_size;
-            while (l < r) {
-                node_t mid = (l + r) >> 1;
+            while (l <r) {
+                node_t mid = l + ((r - l) >> 1);;
                 node_t b_val = b[3*mid];  // intended DMA
                 if (a_val == b_val) {
                     ans++;
