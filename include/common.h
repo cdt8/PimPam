@@ -48,8 +48,12 @@
 #define M (1<<26)
 #elif defined(CH)
 #define DATA_NAME "cit-HepPh_adj"
-#define N (1<<17)
-#define M (1<<22)
+#define N (1<<18)
+#define M (1<<23)
+#elif defined(SS)
+#define DATA_NAME "soc-Slashdot0811_adj"
+#define N (1<<18)
+#define M (1<<23)
 #elif defined(SP)
 #define DATA_NAME "simple_csr_graph"
 #define N (1<<6)

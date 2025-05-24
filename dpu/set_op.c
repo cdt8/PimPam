@@ -15,12 +15,14 @@ extern node_t intersect_seq_buf_thresh(node_t (*buf)[BUF_SIZE], node_t __mram_pt
     if (a_size < (b_size >> 4)&& a_size < BUF_RSIZE) {
         node_t ans = 0;
         node_t i = 0;
-        // if (((uint64_t)a) & 4) {
-        //     a--;
-        //     i = 1;
-        //     a_size++;
-        // }
-        mram_read(a, buf, ALIGN8(a_size*3<< SIZE_NODE_T_LOG));
+
+        if (((uint64_t)a) & 4) {
+            a=a-3;
+            i = 1;
+            a_size++;
+        }
+        
+        mram_read(a, buf, ALIGN8((a_size*3)<<SIZE_NODE_T_LOG));
         for (; i < a_size; i=i++) {
             node_t a_val = buf[0][3*i];
             if (a_val >= threshold) break;
@@ -45,16 +47,16 @@ extern node_t intersect_seq_buf_thresh(node_t (*buf)[BUF_SIZE], node_t __mram_pt
     node_t *a_buf = buf[0];
     node_t *b_buf = buf[1];
     node_t i = 0, j = 0, ans = 0;
-    // if (((uint64_t)a) & 4) {
-    //     a--;
-    //     i = 1;
-    //     a_size++;
-    // }
-    // if (((uint64_t)b) & 4) {
-    //     b--;
-    //     j = 1;
-    //     b_size++;
-    // }
+    if (((uint64_t)a) & 4) {
+        a=a-3;
+        i = 1;
+        a_size++;
+    }
+    if (((uint64_t)b) & 4) {
+        b=b-3;
+        j = 1;
+        b_size++;
+    }
     mram_read(a, a_buf, ALIGN8(MIN(a_size*3, BUF_SIZE) << SIZE_NODE_T_LOG));
     mram_read(b, b_buf, ALIGN8(MIN(b_size*3, BUF_SIZE) << SIZE_NODE_T_LOG));
 

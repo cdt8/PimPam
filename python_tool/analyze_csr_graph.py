@@ -1,3 +1,7 @@
+import re
+import matplotlib
+matplotlib.use('Agg')  # 无图形界面兼容
+import matplotlib.pyplot as plt
 import os
 import struct
 import sys
@@ -40,7 +44,6 @@ def analyze_graph(file_path, n, m, row_ptr_len):
         f.seek(8)  # 跳过 n 和 m
         row_ptr = list(struct.unpack(f'{row_ptr_len}I', f.read(4 * row_ptr_len)))
 
-        # 若 row_ptr 只有 n 个元素，推测最后一个节点度数为 m - row_ptr[-1]
         if row_ptr_len == n:
             degrees = [row_ptr[i + 1] - row_ptr[i] for i in range(n - 1)]
             degrees.append(m - row_ptr[-1])
@@ -60,6 +63,19 @@ def analyze_graph(file_path, n, m, row_ptr_len):
         print(f"  🚀 最大出度         : {max_degree}")
         print(f"  🐜 最小非零出度     : {min_degree}")
         print(f"  ⚠️  出度为 0 的节点数 : {zero_degree_count}")
+
+        # === 出度分布图 ===
+        plt.figure(figsize=(8, 6))
+        plt.hist(degrees, bins=range(0, max_degree + 2), color='skyblue', edgecolor='black')
+        plt.title("Degree Distribution")
+        plt.xlabel("Out-Degree")
+        plt.ylabel("Number of Nodes")
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+        output_path = os.path.join(os.path.dirname(file_path), "degree_histogram.png")
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"🖼️  出度分布图已保存为: {output_path}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -416,13 +416,12 @@ void data_xfer(struct dpu_set_t set,int base) {
 
 void col_redundant()
 {
-    for (edge_ptr j = global_g->m-1;;j--) {
+    for (edge_ptr j = global_g->m;j-- > 0;) {
         //HERE_OKF(" index %d begin...", j); 
         node_t node = global_g->col_idx[j];
         global_g->col_idx[3*j]=node;
         global_g->col_idx[3*j+1]=global_g->row_ptr[node];
         global_g->col_idx[3*j+2]=global_g->row_ptr[node+1];;
-        if(j==0)break;
     }
 }
 

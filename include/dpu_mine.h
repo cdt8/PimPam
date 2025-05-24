@@ -8,14 +8,14 @@
 
 // transferred data
 __mram_noinit edge_ptr row_ptr[DPU_N];   // 16M
-__mram_noinit node_t col_idx[DPU_M];    // 32M
+__dma_aligned __mram_noinit node_t col_idx[DPU_M];    // 32M
 __host uint64_t root_num;
 __mram_noinit node_t roots[DPU_ROOT_NUM];   // 1M
 __mram_noinit uint64_t ans[DPU_ROOT_NUM];   // 2M
 __mram_noinit uint64_t cycle_ct[DPU_ROOT_NUM];   // 2M
 
 // buffer
-node_t buf[NR_TASKLETS][3][BUF_SIZE];  // 6K
+__dma_aligned node_t buf[NR_TASKLETS][3][BUF_SIZE];  // 6K
 //__mram_noinit node_t mram_buf[NR_TASKLETS << 2][MRAM_BUF_SIZE];  // 8M <= 16M
 
 #ifdef BITMAP
