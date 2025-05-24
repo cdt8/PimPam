@@ -2,6 +2,7 @@
 #include <mram.h>
 #include <defs.h>
 
+
 extern node_t intersect_seq_buf_thresh(node_t (*buf)[BUF_SIZE], node_t __mram_ptr *a, node_t a_size, node_t __mram_ptr *b, node_t b_size, node_t __mram_ptr *c, node_t threshold) {
     if (a_size > b_size) {
         node_t __mram_ptr *tmp = a;
