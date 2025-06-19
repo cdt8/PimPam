@@ -6,4 +6,6 @@ result/
 python_tool/*.tsv
 python_tool/*.txt
 nohup.out
-
+data0/
+data.zip
+venv/
