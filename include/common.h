@@ -7,7 +7,7 @@
 #define PERF
 // #define DPU_LOG
 // #define CPU_RUN
-#define NO_PARTITION_AS_POSSIBLE
+//#define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 
 #define BITMAP
@@ -30,6 +30,14 @@
 #define DATA_NAME "CA-AstroPh"
 #define N (1<<15)
 #define M (1<<19)
+#elif defined(CAGQ)
+#define DATA_NAME "ca-GrQc_adj"
+#define N (1<<16)
+#define M (1<<20)
+#elif defined(CAHT)
+#define DATA_NAME "ca-HepTh_adj"
+#define N (1<<16)
+#define M (1<<20)
 #elif defined(YT)
 #define DATA_NAME "com-youtube"
 #define N (1<<21)
@@ -42,6 +50,10 @@
 #define DATA_NAME "soc-LiveJournal1"
 #define N (1<<23)
 #define M (1<<27)
+#elif defined(ORKUT)
+#define DATA_NAME "com-orkut"
+#define N (1<<23)
+#define M (1<<28)
 #elif defined(PA)
 #define DATA_NAME "roadNet-PA_adj"
 #define N (1<<23)
@@ -70,6 +82,14 @@
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)
 #define M (1<<25)
+#elif defined(NTX)
+#define DATA_NAME "roadNet-TX_adj"
+#define N (1<<23)
+#define M (1<<25)
+#elif defined(AM0302)
+#define DATA_NAME "amazon0302_adj"
+#define N (1<<20)
+#define M (1<<23)
 #elif defined(AM0312)
 #define DATA_NAME "amazon0312_adj"
 #define N (1<<20)
@@ -78,8 +98,28 @@
 #define DATA_NAME "amazon0505_adj"
 #define N (1<<20)
 #define M (1<<23)
+#elif defined(AM0601)
+#define DATA_NAME "amazon0601_adj"
+#define N (1<<20)
+#define M (1<<23)
 #elif defined(SC18_16)
 #define DATA_NAME "graph500-scale18-ef16_adj"
+#define N (1<<20)
+#define M (1<<24)
+#elif defined(Theory_25_81_256_B1k)
+#define DATA_NAME "Theory-25-81-256-B1k"
+#define N (1<<20)
+#define M (1<<24)
+#elif defined(Theory_25_81_256_B2k)
+#define DATA_NAME "Theory-25-81-256-B2k"
+#define N (1<<20)
+#define M (1<<24)
+#elif defined(Theory_4_5_9_16_25_B1k)
+#define DATA_NAME "Theory-4-5-9-16-25-B1k"
+#define N (1<<20)
+#define M (1<<24)
+#elif defined(Theory_4_5_9_16_25_B2k)
+#define DATA_NAME "Theory-4-5-9-16-25-B2k"
 #define N (1<<20)
 #define M (1<<24)
 #else

@@ -48,14 +48,14 @@ static inline double predict_workload(Graph *g, node_t root) {
         }
     }
     double eff_deg = eff_deg = l - g->row_ptr[root];
-    if (deg > MRAM_BUF_SIZE) {
-        printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
-        exit(1);
-    }
-    if (eff_deg > BITMAP_SIZE * 32) {
-        printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
-        exit(1);
-    }
+    // if (deg > MRAM_BUF_SIZE) {
+    //     printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
+    //     exit(1);
+    // }
+    // if (eff_deg > BITMAP_SIZE * 32) {
+    //     printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
+    //     exit(1);
+    // }
     double avg_deg = 0;
     for (edge_ptr i = g->row_ptr[root]; i < g->row_ptr[root + 1]; i++) {
         node_t neighbor = g->col_idx[i];
@@ -98,14 +98,14 @@ static inline double predict_workload(Graph *g, node_t root) {
     }
     double eff_deg = l - g->row_ptr[root];
     eff_num[root]=eff_deg;
-    if (deg > MRAM_BUF_SIZE) {
-        printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
-        exit(1);
-    }
-    if (eff_deg > BITMAP_SIZE * 32) {
-        printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
-        exit(1);
-    }
+    // if (deg > MRAM_BUF_SIZE) {
+    //     printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
+    //     exit(1);
+    // }
+    // if (eff_deg > BITMAP_SIZE * 32) {
+    //     printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
+    //     exit(1);
+    // }
     double avg_deg = (double)global_g->m / global_g->n;
     double n = global_g->n;
     (void)deg;
@@ -217,9 +217,44 @@ static void init_op_bitmap(uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL], node_t bm
         }
     }
     //print_bitmap(op_bitmap, 100, 100);  //test
-    verify_bitmap_intersection(op_bitmap,bm_nums); //test
+    //verify_bitmap_intersection(op_bitmap,bm_nums); //test
 }
 
+static node_t count_high_degree_nodes(Graph *g, node_t threshold) {
+    node_t l = 0, r = g->n;
+    while (l < r) {
+        node_t mid = l + ((r - l) >> 1);
+        node_t degree = g->row_ptr[mid + 1] - g->row_ptr[mid];
+        if (degree > threshold) {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+
+    node_t count = l;
+
+    count &= ~63;
+
+    // 限制最大值为8192
+    if (count > 8192) {
+        count = 8192;
+    }
+
+    return count;
+}
+
+static void init_bm_num(){
+    node_t node_count = count_high_degree_nodes(global_g, global_g->n*(0.0046));
+    int predict_dpu_num = node_count / (global_g->n / EF_NR_DPUS) * 3 ;
+    BM_NUMS = node_count;
+    BM_DPUS = predict_dpu_num;
+    BM_DPUS &= ~63;
+    if(!BM_DPUS)BM_NUMS=0;
+    BM_DPUS = MIN(BM_DPUS,BM_NUMS);
+    printf("BM_NUMS = %u\n", BM_NUMS);
+    printf("BM_DPUS = %u\n", BM_DPUS);
+}
 
 static void read_input() {
     FILE *fin = fopen(DATA_PATH, "rb");
@@ -316,6 +351,7 @@ static void data_allocate(bitmap_t bitmap) {
     //normal
     static edge_ptr m_count[EF_NR_DPUS];   // edges put in dpu
     static node_t allocate_rank[N];
+    
     static double dpu_workload[EF_NR_DPUS];
     
     for (node_t i = 0; i < global_g->n; i++) {
@@ -323,7 +359,7 @@ static void data_allocate(bitmap_t bitmap) {
         workload[i] = predict_workload(global_g, i);
     }
     qsort(allocate_rank, global_g->n, sizeof(node_t), workload_cmp);
-    
+    init_bm_num();
 
     heap = heap_create(EF_NR_DPUS-BM_DPUS);
     heap_init(heap);
@@ -531,13 +567,12 @@ static void data_xfer(struct dpu_set_t set,int base) {
 
 }
 
-static void col_redundant()
+static void cut_edge()
 {
     Graph* g = global_g;
     edge_ptr* new_row_ptr = (edge_ptr*) malloc((g->n + 1) * sizeof(edge_ptr));
     node_t* new_col_idx = (node_t*) malloc(g->m * sizeof(node_t)); 
 
-    
     if (!new_row_ptr || !new_col_idx) {
         printf("Memory allocation failed!\n");
         exit(1);
@@ -550,7 +585,6 @@ static void col_redundant()
         edge_ptr start = g->row_ptr[i];
         int eff = eff_num[i];
         
-        //if(eff>16&&i<512)    printf("data %u =================== num %u\n",i,eff);
         for (int j = 0; j < eff; j++) {
             new_col_idx[col_offset++] = g->col_idx[start + j];
         }
@@ -570,9 +604,9 @@ static void col_redundant()
 
     free(new_row_ptr);
     free(new_col_idx);
-
-    //re_col
-
+}
+static void col_redundant()
+{
     offset = global_g->m;
     if (offset & 1) {
             offset += 1;
@@ -590,9 +624,9 @@ void prepare_graph() {
     data_renumber();    
     bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap); 
-
+    cut_edge();
 #ifdef NO_PARTITION_AS_POSSIBLE
-    if (global_g->n > DPU_N - 1 || global_g->m > DPU_M)no_partition_flag=0; //data_compact
+    if (global_g->n > DPU_N - 1 || global_g->m*(3/2) > DPU_M)no_partition_flag=0; //data_compact
 #else
     no_partition_flag=0; 
 #endif

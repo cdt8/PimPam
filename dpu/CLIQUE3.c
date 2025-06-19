@@ -24,7 +24,6 @@ static ans_t __imp_clique3_2(sysname_t tasklet_id, node_t __mram_ptr * root_col,
     
     node_t(*tasklet_buf)[BUF_SIZE] = buf[tasklet_id];
 
-
 #ifdef NO_RUN   //test cycle without Intersection operation 
     //node_t ans =  intersect_seq_buf_thresh_no_run(tasklet_buf, root_col, root_size, second_col, second_size);
     //node_t ans = 1;
@@ -151,10 +150,9 @@ extern void clique3( sysname_t tasklet_id )
 				node_t		second_root	= col_idx[j];                   /* intended DMA */
 				edge_ptr	second_begin	= row_ptr[second_root];         /* intended DMA */
 				edge_ptr	second_end	= row_ptr[second_root + 1];     /* intended DMA */
-				partial_ans[tasklet_id] += __imp_clique3_2( tasklet_id, &col_idx[root_begin], i - root_begin, &col_idx[second_begin], second_end - second_begin );
+				partial_ans[tasklet_id] += __imp_clique3_2( tasklet_id, &col_idx[root_begin], j - root_begin, &col_idx[second_begin], second_end - second_begin );
 			}
 		}
-
 
 #ifdef PERF
 		partial_cycle[tasklet_id] = timer_stop( &cycles[tasklet_id] );
