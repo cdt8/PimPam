@@ -347,11 +347,10 @@ static void data_allocate(bitmap_t bitmap) {
         global_g->root_num[i] = 0;
         global_g->roots[i] = malloc(DPU_ROOT_NUM * sizeof(node_t));
     }
+    init_bm_num();
 
-    //normal
     static edge_ptr m_count[EF_NR_DPUS];   // edges put in dpu
     static node_t allocate_rank[N];
-    
     static double dpu_workload[EF_NR_DPUS];
     
     for (node_t i = 0; i < global_g->n; i++) {
@@ -359,8 +358,22 @@ static void data_allocate(bitmap_t bitmap) {
         workload[i] = predict_workload(global_g, i);
     }
     qsort(allocate_rank, global_g->n, sizeof(node_t), workload_cmp);
-    init_bm_num();
+    
+    //bm
+    heap = heap_create(BM_DPUS);
+    heap_init(heap);
+    for (node_t i = 0; i < global_g->n; i++) {
+        node_t node = allocate_rank[i];
+        if(node>=BM_NUMS)continue;
+        uint32_t cur_dpu = heap_pop(heap);
+        global_g->roots[cur_dpu][global_g->root_num[cur_dpu]++] = node;
+        dpu_workload[cur_dpu] += workload[node];
+        heap_push(heap, cur_dpu, dpu_workload[cur_dpu]);
 
+    }
+    heap_free(heap);
+    memset(dpu_workload,0,sizeof(dpu_workload));
+    //normal
     heap = heap_create(EF_NR_DPUS-BM_DPUS);
     heap_init(heap);
 
@@ -625,6 +638,7 @@ void prepare_graph() {
     bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
     data_allocate(bitmap); 
     cut_edge();
+    
 #ifdef NO_PARTITION_AS_POSSIBLE
     if (global_g->n > DPU_N - 1 || global_g->m*(3/2) > DPU_M)no_partition_flag=0; //data_compact
 #else
@@ -633,12 +647,8 @@ void prepare_graph() {
 
     if(no_partition_flag)col_redundant();
 
+
     init_op_bitmap(op_bitmap, BM_NUMS, global_g);
-    for(node_t i = 0;i<BM_NUMS;i++)
-    {
-        uint32_t dpu_id = i % BM_DPUS;  // 轮流分配到 BM_DPUS 个 DPU
-        global_g->roots[dpu_id][global_g->root_num[dpu_id]++] = i;
-    }
 
 }
 
