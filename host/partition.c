@@ -216,8 +216,7 @@ static void init_op_bitmap(uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL], node_t bm
             op_bitmap[i][neighbor >> 6] |= (1ULL << (neighbor & 63));
         }
     }
-    //print_bitmap(op_bitmap, 100, 100);  //test
-    //verify_bitmap_intersection(op_bitmap,bm_nums); //test
+
 }
 
 static node_t count_high_degree_nodes(Graph *g, node_t threshold) {
@@ -249,6 +248,8 @@ static void init_bm_num(){
     int predict_dpu_num = node_count / (global_g->n / EF_NR_DPUS) * 3 ;
     BM_NUMS = node_count;
     BM_DPUS = predict_dpu_num;
+    // BM_NUMS = 2048;
+    // BM_DPUS = 128;
     BM_DPUS &= ~63;
     if(!BM_DPUS)BM_NUMS=0;
     BM_DPUS = MIN(BM_DPUS,BM_NUMS);
@@ -646,9 +647,9 @@ void prepare_graph() {
 #endif
 
     if(no_partition_flag)col_redundant();
-
-
     init_op_bitmap(op_bitmap, BM_NUMS, global_g);
+    //print_bitmap(op_bitmap, 100, 100);  //test
+    //verify_bitmap_intersection(op_bitmap,bm_nums); //test
 
 }
 
