@@ -122,6 +122,26 @@
 #define DATA_NAME "Theory-4-5-9-16-25-B2k"
 #define N (1<<20)
 #define M (1<<24)
+#elif defined(P2P04)
+#define DATA_NAME "p2p-Gnutella04_adj"
+#define N (1<<14)
+#define M (1<<19)
+#elif defined(P2P05)
+#define DATA_NAME "p2p-Gnutella05_adj"
+#define N (1<<14)
+#define M (1<<19)
+#elif defined(P2P06)
+#define DATA_NAME "p2p-Gnutella06_adj"
+#define N (1<<14)
+#define M (1<<19)
+#elif defined(P2P31)
+#define DATA_NAME "p2p-Gnutella31_adj"
+#define N (1<<17)
+#define M (1<<20)
+#elif defined(MAWI1)
+#define DATA_NAME "mawi1"
+#define N (1<<25)
+#define M (1<<27)
 #else
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"

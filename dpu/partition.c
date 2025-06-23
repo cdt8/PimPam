@@ -8,7 +8,7 @@
 
 __mram_noinit_keep uint32_t bitmap[N >> 5];
 __mram_noinit_keep uint32_t involve_bitmap[N >> 5];
-__mram_noinit_keep uint32_t renumber[N];
+__mram_noinit_keep uint32_t renumber[1<<22];
 __mram_noinit_keep edge_ptr row_ptr[PARTITION_M];
 __mram_noinit_keep node_t col_idx[PARTITION_M];
 __mram_noinit_keep edge_ptr processed_row_ptr[PARTITION_M];
@@ -22,9 +22,22 @@ __host uint64_t mode;   // 0 for first round, 1 for renumber, 2 for second round
 __host uint64_t processed_row_size;
 __host uint64_t processed_col_size;
 __host uint64_t processed_offset;
+__host node_t renumber_size;
 
 MUTEX_INIT(latch);
 BARRIER_INIT(barrier, NR_TASKLETS);
+
+
+static inline int binary_search_renumber(uint32_t __mram_ptr *arr, int size, node_t target) {
+    int l = 0, r = size - 1;
+    while (l <= r) {
+        int mid = (l + r) >> 1;
+        if (arr[mid] == target) return mid;
+        else if (arr[mid] < target) l = mid + 1;
+        else r = mid - 1;
+    }
+    return -1; 
+}
 
 int main() {
     sysname_t tasklet_id = me();
@@ -60,14 +73,15 @@ int main() {
             uint32_t cur_bitmap = involve_bitmap[i];   // intended DMA
             for (node_t j = 0; j < 32; j++) {
                 if (cur_bitmap & (1 << j)) {
-                    renumber[(i << 5) | j] = cur;
+                    renumber[cur] = (i << 5) | j;
                     cur++;
                 }
             }
         }
         for (node_t i = 0; i < root_size; i++) {
-            roots[i] = renumber[roots[i]];   // intended DMA
+            roots[i] = binary_search_renumber(renumber, cur, roots[i]);
         }
+        renumber_size = cur;
     }
     else if (mode == 2) {
         if (tasklet_id != 0) return 0;
@@ -91,7 +105,7 @@ int main() {
                     edge_ptr node_end = node_begin+eff_num[i];   // intended DMA
                     //edge_ptr node_end = row_ptr[i+1] - offset;  // intended DMA
                     for (edge_ptr j = node_begin; j < node_end; j++) {
-                        node_t new_idx = renumber[col_idx[j]];   // intended DMA
+                        node_t new_idx = binary_search_renumber(renumber,renumber_size, col_idx[j]);  // intended DMA
                         processed_col_idx[col_size] = new_idx;   // intended DMA
                         col_size++;
                     }

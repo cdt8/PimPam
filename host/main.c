@@ -170,6 +170,7 @@ static void collect_dpu_batch(struct dpu_set_t set, int base, int current_batch_
             total_ans += dpu_ans[k];
         }
         free(dpu_ans);
+        
 
 #ifdef PERF
         // ====== collect performance ======

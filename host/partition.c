@@ -341,6 +341,7 @@ void heap_push(Heap *heap, uint32_t dpu_id, double workload);
 void heap_init(Heap *heap);
 void heap_free(Heap *heap);
 Heap *heap_create(uint32_t capacity);
+static void cut_edge();
 
 static void data_allocate(bitmap_t bitmap) {
     memset(bitmap, 0, (size_t)(N >> 3) * EF_NR_DPUS);
@@ -375,6 +376,7 @@ static void data_allocate(bitmap_t bitmap) {
     heap_free(heap);
     memset(dpu_workload,0,sizeof(dpu_workload));
     //normal
+    cut_edge();
     heap = heap_create(EF_NR_DPUS-BM_DPUS);
     heap_init(heap);
 
@@ -437,7 +439,7 @@ static void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
     while (start < global_g->n) {
             //HERE_OKF("initialize ok");
         uint64_t size = 0;
-        while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
+        while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M && size + 32 < PARTITION_M) {
             size++;
         }
         DPU_ASSERT(dpu_broadcast_to(set, "start", 0, &start, sizeof(uint64_t), DPU_XFER_DEFAULT));
@@ -472,7 +474,7 @@ static void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
     start = 0;
     while (start < global_g->n) {
         uint64_t size = 0;
-        while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M) {
+        while (start + size < global_g->n && global_g->row_ptr[start + size + 1] - global_g->row_ptr[start] < PARTITION_M && size + 32 < PARTITION_M) {
             size++;
         }
         DPU_ASSERT(dpu_broadcast_to(set, "start", 0, &start, sizeof(uint64_t), DPU_XFER_DEFAULT));
@@ -581,6 +583,24 @@ static void data_xfer(struct dpu_set_t set,int base) {
 
 }
 
+static void*alloc_bitmap(uint32_t num_bits, size_t num_dpus) {
+    uint64_t words_per_dpu = ((uint64_t)num_bits + 31) / 32;   // 向上取整
+    uint64_t total_words = words_per_dpu * num_dpus;
+    uint64_t total_bytes = total_words * sizeof(uint32_t);
+
+    // 转为 GiB，保留两位小数
+    double total_gib = total_bytes / (1024.0 * 1024 * 1024);
+
+    void *bitmap = malloc((size_t)total_bytes);
+    if (!bitmap) {
+        printf("❌ bitmap 分配失败！%.2f GiB (%lu 字节)\n", total_gib, total_bytes);
+        exit(1);
+    } else {
+        printf("✅ bitmap 分配成功：%.2f GiB (%lu 字节)\n", total_gib, total_bytes);
+        return bitmap;
+    }
+}
+
 static void cut_edge()
 {
     Graph* g = global_g;
@@ -636,17 +656,18 @@ static void col_redundant()
 void prepare_graph() {
     read_input();  
     data_renumber();    
-    bitmap = malloc(sizeof(uint32_t) * (N >> 5) * EF_NR_DPUS);
+    bitmap = alloc_bitmap(N, EF_NR_DPUS);
     data_allocate(bitmap); 
-    cut_edge();
+
     
 #ifdef NO_PARTITION_AS_POSSIBLE
-    if (global_g->n > DPU_N - 1 || global_g->m*(3/2) > DPU_M)no_partition_flag=0; //data_compact
+    if (global_g->n > DPU_N - 1 || global_g->m * 3 > DPU_M)no_partition_flag=0; //data_compact
 #else
     no_partition_flag=0; 
 #endif
 
     if(no_partition_flag)col_redundant();
+    
     init_op_bitmap(op_bitmap, BM_NUMS, global_g);
     //print_bitmap(op_bitmap, 100, 100);  //test
     //verify_bitmap_intersection(op_bitmap,bm_nums); //test

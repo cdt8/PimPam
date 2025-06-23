@@ -66,7 +66,7 @@ def analyze_graph(file_path, n, m, row_ptr_len):
 
         # === 出度分布图 ===
         plt.figure(figsize=(8, 6))
-        plt.hist(degrees, bins=range(0, max_degree + 2), color='skyblue', edgecolor='black')
+        plt.hist(degrees, bins=1000, color='skyblue', edgecolor='black')
         plt.title("Degree Distribution")
         plt.xlabel("Out-Degree")
         plt.ylabel("Number of Nodes")
