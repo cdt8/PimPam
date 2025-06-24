@@ -9,13 +9,13 @@ extern ans_t clique2(Graph *g, node_t root);
 extern ans_t KERNEL_FUNC(Graph *g, node_t root);
 extern Graph *global_g;
 extern bitmap_t bitmap;
-Graph *g;
-ans_t ans[N];
-ans_t result[N];
-Timer timer;
-uint64_t cycle_ct[N];
-uint64_t cycle_ct_dpu[EF_NR_DPUS][NR_TASKLETS];
-node_t large_degree_num[EF_NR_DPUS];
+Graph *g = NULL;
+ans_t ans[N] = {0};
+ans_t result[N] = {0};
+Timer timer = {0};
+uint64_t cycle_ct[N]={0};
+uint64_t cycle_ct_dpu[EF_NR_DPUS][NR_TASKLETS]={0};
+node_t large_degree_num[EF_NR_DPUS]={0};
 
 //prepare dpu
 ans_t total_ans = 0;

@@ -103,9 +103,21 @@
 #define N (1<<20)
 #define M (1<<23)
 #elif defined(SC18_16)
-#define DATA_NAME "graph500-scale18-ef16_adj"
-#define N (1<<20)
-#define M (1<<24)
+#define DATA_NAME "scale18-ef16"
+#define N (1<<23)
+#define M (1<<26)
+#elif defined(SC19_16)
+#define DATA_NAME "scale19-ef16"
+#define N (1<<23)
+#define M (1<<26)
+#elif defined(P2P04)
+#define DATA_NAME "p2p-Gnutella04"
+#define N (1<<14)
+#define M (1<<19)
+#elif defined(P2P31)
+#define DATA_NAME "p2p-Gnutella31"
+#define N (1<<17)
+#define M (1<<20)
 #elif defined(Theory_25_81_256_B1k)
 #define DATA_NAME "Theory-25-81-256-B1k"
 #define N (1<<20)
@@ -122,26 +134,38 @@
 #define DATA_NAME "Theory-4-5-9-16-25-B2k"
 #define N (1<<20)
 #define M (1<<24)
-#elif defined(P2P04)
-#define DATA_NAME "p2p-Gnutella04_adj"
-#define N (1<<14)
-#define M (1<<19)
-#elif defined(P2P05)
-#define DATA_NAME "p2p-Gnutella05_adj"
-#define N (1<<14)
-#define M (1<<19)
-#elif defined(P2P06)
-#define DATA_NAME "p2p-Gnutella06_adj"
-#define N (1<<14)
-#define M (1<<19)
-#elif defined(P2P31)
-#define DATA_NAME "p2p-Gnutella31_adj"
-#define N (1<<17)
-#define M (1<<20)
+#elif defined(Theory_9_16_25_81_B1k)
+#define DATA_NAME "Theory-9-16-25-81-B1k"
+#define N (1<<20)
+#define M (1<<24)
+#elif defined(Theory_3_4_5_9_16_25_B1k)
+#define DATA_NAME "Theory-3-4-5-9-16-25-B1k"
+#define N (1<<23)
+#define M (1<<26)
 #elif defined(MAWI1)
-#define DATA_NAME "mawi1"
+#define DATA_NAME "201512012345"
 #define N (1<<25)
 #define M (1<<27)
+#elif defined(MAWI2)
+#define DATA_NAME "201512020000"
+#define N (1<<26)
+#define M (1<<27)
+#elif defined(MAWI3)
+#define DATA_NAME "201512020030"
+#define N (1<<27)
+#define M (1<<28)
+#elif defined(U1a)
+#define DATA_NAME "U1a"
+#define N (68863500)
+#define M (143415000)
+#elif defined(V2a)
+#define DATA_NAME "V2a"
+#define N (55046400)
+#define M (117264000)
+#elif defined(P1a)
+#define DATA_NAME "P1a"
+#define N (139364352)
+#define M (297864000)
 #else
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"

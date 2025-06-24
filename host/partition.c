@@ -5,17 +5,17 @@
 #include <dpu.h>
 #include <dpu_types.h>
 
-Graph *global_g;
+Graph *global_g=NULL;
 Heap * heap;
-bitmap_t bitmap;
-double workload[N];
-node_t eff_num[N];
+bitmap_t bitmap = {0};
+double workload[N]={0};
+node_t eff_num[N]={0};
 edge_ptr offset = 0;
 uint32_t no_partition_flag = 1; //true
 
 extern int BM_DPUS;
 extern node_t BM_NUMS;
-uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL];  //bitmap transfer
+uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL]={0};  //bitmap transfer
 
 
 static int deg_cmp(const void *a, const void *b) {
@@ -276,26 +276,59 @@ static void read_input() {
 static void data_renumber() {
     static node_t rank[N];
     static node_t renumbered[N];
+    static uint32_t out_deg[N] = {0};
+    static uint32_t in_deg[N] = {0};
+    static bool valid[N] = {0};
+    node_t new_n = 0;
+
     Graph *tmp_g = malloc(sizeof(Graph));
     memcpy(tmp_g, global_g, sizeof(Graph));
+
+    // === 1. 统计出度与入度（邻接表遍历）===
     for (node_t i = 0; i < global_g->n; i++) {
-        rank[i] = i;
+        out_deg[i] = tmp_g->row_ptr[i + 1] - tmp_g->row_ptr[i];
+        for (edge_ptr j = tmp_g->row_ptr[i]; j < tmp_g->row_ptr[i + 1]; j++) {
+            node_t v = tmp_g->col_idx[j];
+            in_deg[v]++;
+        }
     }
-    qsort(rank, global_g->n, sizeof(node_t), deg_cmp);
+
+    // === 2. 去除度数小于等于 2 的点（无向图中相当于一条边或孤点） ===
     for (node_t i = 0; i < global_g->n; i++) {
+        if (out_deg[i] + in_deg[i] > 2) {
+            valid[i] = true;
+            rank[new_n++] = i;
+        }
+    }
+
+    // === 3. 排序（出度降序） ===
+    qsort(rank, new_n, sizeof(node_t), deg_cmp);
+
+    // === 4. 构建 renumbered 映射 ===
+    for (node_t i = 0; i < new_n; i++) {
         renumbered[rank[i]] = i;
     }
+
+    // === 5. 构造新的 CSR 图 ===
     edge_ptr cur = 0;
-    for (node_t i = 0; i < global_g->n; i++) { 
-        global_g->row_ptr[i] = cur;
+    for (node_t i = 0; i < new_n; i++) {
         node_t node = rank[i];
+        global_g->row_ptr[i] = cur;
         for (edge_ptr j = tmp_g->row_ptr[node]; j < tmp_g->row_ptr[node + 1]; j++) {
-            global_g->col_idx[cur++] = renumbered[tmp_g->col_idx[j]];
+            node_t neighbor = tmp_g->col_idx[j];
+            if (valid[neighbor]) {
+                global_g->col_idx[cur++] = renumbered[neighbor];
+            }
         }
         qsort(global_g->col_idx + global_g->row_ptr[i], cur - global_g->row_ptr[i], sizeof(node_t), node_t_cmp);
     }
+    global_g->row_ptr[new_n] = cur;
+    global_g->n = new_n;
+    global_g->m = cur;
+
     free(tmp_g);
 }
+
 
 static inline bool check_in_bitmap(node_t n, uint32_t bitmap[N >> 5]) {
     return bitmap[n >> 5] & (1 << (n & 31));
@@ -584,7 +617,7 @@ static void data_xfer(struct dpu_set_t set,int base) {
 }
 
 static void*alloc_bitmap(uint32_t num_bits, size_t num_dpus) {
-    uint64_t words_per_dpu = ((uint64_t)num_bits + 31) / 32;   // 向上取整
+    uint64_t words_per_dpu = (uint64_t)num_bits/32;
     uint64_t total_words = words_per_dpu * num_dpus;
     uint64_t total_bytes = total_words * sizeof(uint32_t);
 
