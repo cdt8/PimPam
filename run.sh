@@ -4,7 +4,7 @@ GRAPH=${1:-AM0312}
 PATTERN=${2:-CLIQUE3}
 
 make clean
-GRAPH=$GRAPH PATTERN=$PATTERN make test
+GRAPH=$GRAPH PATTERN=$PATTERN make test EXTRA_FLAGS=-DWRAM_ASYNC
 
 # 从 common.h 里提取 DATA_NAME 和 PATTERN_NAME
 DATA_NAME=$(grep -A1 "#elif defined($GRAPH)" include/common.h | grep DATA_NAME | awk '{print $3}' | tr -d '"')

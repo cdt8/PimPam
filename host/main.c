@@ -54,8 +54,9 @@ for(int index=0;index<batch_count;index++){
 #endif
     data_transfer(set,g,bitmap,base);
     // run it on DPU
+    HERE_OK()
     DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
-
+    HERE_OK()
     // collect answer and cycle count
     bool fine = true;
     bool finished, failed;
@@ -70,6 +71,10 @@ for(int index=0;index<batch_count;index++){
             fine = false;
             break;
         }
+        printf("printing log for dpu:\n");
+        
+        DPU_ASSERT(dpu_log_read(dpu, stdout));
+
         // collect answer
         uint64_t *dpu_ans = (uint64_t *)malloc(ALIGN8(g->root_num[each_dpu+base] * sizeof(uint64_t)));
         DPU_ASSERT(dpu_copy_from(dpu, "ans", 0, dpu_ans, ALIGN8(g->root_num[each_dpu+base] * sizeof(uint64_t))));

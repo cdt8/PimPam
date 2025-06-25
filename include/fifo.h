@@ -11,16 +11,41 @@
 
 #define WRAM_FIFO_CAPACITY 128   // Job缓冲上限，WRAM容量限制
 #define WRAM_MAX_ROOT_BUF_SLOT 8
-#define MRAM_MAX_SECOND_BUF_SLOT 16
-#define MRAM_BUF_SIZE 256
+#define WRAM_MAX_SECOND_BUF_SLOT 16
+#define WRAM_BUF_SIZE 256
 
-// ---------------- Job 结构 ----------------
+// ---------------- Root WRAM缓冲区元信息 ----------------
 typedef struct {
     node_t root_id;
-    uint8_t a_buf_index;   // root邻居槽位索引
-    uint8_t b_buf_index;   // second邻居槽位索引
+    node_t *ptr;          // 指向 WRAM 实际缓冲
+    uint32_t size;
+    uint32_t ref_count;
+    bool in_use;
+} a_buf_entry_t;
+
+// ---------------- Second WRAM缓冲区元信息 ----------------
+typedef struct {
+    node_t second_id;
+    node_t *ptr;
+    uint32_t size;
+    bool in_use;
+} b_buf_entry_t;
+
+// ---------------- Job 结构 ----------------
+// typedef struct {
+//     node_t root_id;
+//     uint8_t a_buf_index;   // root邻居槽位索引
+//     uint8_t b_buf_index;   // second邻居槽位索引
+//     uint32_t a_size;
+//     uint32_t b_size;
+// } job_t;
+typedef struct {
+    node_t root_id;
+    uint8_t a_index;        // 对应 WRAM loader 中的 a
+    uint8_t b_index;        // 对应 WRAM loader 中的 b
     uint32_t a_size;
     uint32_t b_size;
+    uint32_t threshold;     // 可选阈值参数
 } job_t;
 
 // ---------------- FIFO 定义 ----------------
@@ -30,6 +55,13 @@ typedef struct {
     volatile uint32_t tail;
     volatile uint8_t lock;
 } fifo_t;
+
+__dma_aligned a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
+__dma_aligned b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
+__dma_aligned node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
+__dma_aligned node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
+__dma_aligned fifo_t global_fifo;
+
 
 static inline void fifo_init(fifo_t *fifo) {
     fifo->head = 0;
@@ -77,14 +109,6 @@ bool fifo_dequeue(fifo_t *fifo, job_t *job) {
     return true;
 }
 
-// ---------------- Root WRAM缓冲区元信息 ----------------
-typedef struct {
-    node_t root_id;
-    node_t *ptr;          // 指向 WRAM 实际缓冲
-    uint32_t size;
-    uint32_t ref_count;
-    bool in_use;
-} a_buf_entry_t;
 
 static inline int allocate_a_buf() {
     for (int i = 0; i < WRAM_MAX_ROOT_BUF_SLOT; i++) {
@@ -102,16 +126,9 @@ static inline void release_a_buf(int index) {
     a_buf_table[index].ref_count = 0;
 }
 
-// ---------------- Second WRAM缓冲区元信息 ----------------
-typedef struct {
-    node_t second_id;
-    node_t *ptr;
-    uint32_t size;
-    bool in_use;
-} b_buf_entry_t;
 
 static inline int allocate_b_buf() {
-    for (int i = 0; i < MRAM_MAX_SECOND_BUF_SLOT; i++) {
+    for (int i = 0; i < WRAM_MAX_SECOND_BUF_SLOT; i++) {
         if (!b_buf_table[i].in_use) {
             b_buf_table[i].in_use = true;
             return i;
@@ -125,11 +142,18 @@ static inline void release_b_buf(int index) {
 }
 
 // ---------------- 全局共享资源（WRAM区域） ----------------
-__host fifo_t global_fifo;
-__host a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
-__host b_buf_entry_t b_buf_table[MRAM_MAX_SECOND_BUF_SLOT];
-__host node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][MRAM_BUF_SIZE];
-__host node_t b_buf_pool[MRAM_MAX_SECOND_BUF_SLOT][MRAM_BUF_SIZE];
+// __host fifo_t global_fifo;
+// __host a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
+// __host b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
+// __host node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
+// __host node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
+// #ifdef WRAM_ASYNC
+// __dma_aligned a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
+// __dma_aligned b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
+// __dma_aligned node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
+// __dma_aligned node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
+// __dma_aligned fifo_t global_fifo;
+// #endif
 
 
 static inline void __atomic_add(volatile ans_t *addr, ans_t val) {

@@ -2,6 +2,26 @@
 #include <mram.h>
 #include <defs.h>
 
+// 异步模式：WRAM 中两个已加载数组进行交集计算
+extern node_t intersect_from_buf(node_t *a, uint32_t a_size, node_t *b, uint32_t b_size) {
+    node_t ans = 0;
+    uint32_t i = 0, j = 0;
+
+    // 确保遍历较短数组以提升效率（交集计算仍是有序数组双指针法）
+    while (i < a_size && j < b_size) {
+        if (a[i] == b[j]) {
+            ans++;
+            i++;
+            j++;
+        } else if (a[i] < b[j]) {
+            i++;
+        } else {
+            j++;
+        }
+    }
+
+    return ans;
+}
 
 extern node_t intersect_seq_buf_thresh(node_t (*buf)[BUF_SIZE], node_t __mram_ptr *a, node_t a_size, node_t __mram_ptr *b, node_t b_size) {        
     node_t ans = 0;

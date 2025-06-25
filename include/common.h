@@ -5,7 +5,7 @@
 #include <stdio.h>  // for debug
 
 #define PERF
-// #define DPU_LOG
+#define DPU_LOG
 // #define CPU_RUN
 #define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
@@ -70,6 +70,10 @@
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)
 #define M (1<<25)
+#elif defined(AM0302)
+#define DATA_NAME "amazon0302_adj"
+#define N (1<<20)
+#define M (1<<23)
 #elif defined(AM0312)
 #define DATA_NAME "amazon0312_adj"
 #define N (1<<20)

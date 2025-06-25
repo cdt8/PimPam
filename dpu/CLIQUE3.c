@@ -1,6 +1,6 @@
 #include <dpu_mine.h>
 #include <common.h>
-
+#include <fifo.h>
 static ans_t partial_ans[NR_TASKLETS];
 static uint64_t partial_cycle[NR_TASKLETS];
 static perfcounter_cycles cycles[NR_TASKLETS];
@@ -79,7 +79,7 @@ static ans_t __imp_clique3_partition(sysname_t tasklet_id, node_t root) {
 // #include <fifo.h>
 // #include <atomic.h> // 假设你有自定义或 SDK 中的原子操作
 
-// #define NR_LOADER 1
+#define NR_LOADER 4
 #define NR_WORKER (NR_TASKLETS - NR_LOADER)
 
 // static ans_t partial_ans[NR_TASKLETS];
@@ -89,7 +89,9 @@ static ans_t __imp_clique3_partition(sysname_t tasklet_id, node_t root) {
 
 #ifdef WRAM_ASYNC
 extern void clique3(sysname_t tasklet_id) {
+    printf("clique3");
     if (tasklet_id == 0) {
+        printf("initing\n");
         fifo_init(&global_fifo);
     }
     barrier_wait(&co_barrier);
@@ -159,7 +161,8 @@ extern void clique3(sysname_t tasklet_id) {
             node_t res = intersect_from_buf(a, job.a_size, b, job.b_size, job.threshold);
 
             // 原子加
-            __atomic_add(&ans[job.root_id], res);
+            // __atomic_add(&ans[job.root_id], res);
+            ans[job.root_id] += res;
 
             release_b_buf(job.b_index);
             if (--a_buf_table[job.a_index].ref_count == 0) {
@@ -301,3 +304,4 @@ extern void clique3( sysname_t tasklet_id )
 #endif
 	}
 }
+#endif // WRAM_ASYNC
