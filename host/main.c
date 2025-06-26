@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <dpu.h>
 
-extern void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap,int base);
+extern void data_transfer(struct dpu_set_t set,bitmap_t bitmap,int base);
+extern void prepare_graph();
+extern void data_bm_transfer(struct dpu_set_t set ,int base);
 extern ans_t clique2(Graph *g, node_t root);
 extern ans_t KERNEL_FUNC(Graph *g, node_t root);
 extern Graph *global_g;
@@ -22,7 +24,7 @@ ans_t total_ans = 0;
 #ifdef PERF
     uint64_t total_cycle_ct = 0;
 #endif
-int BM_DPUS;
+uint32_t BM_DPUS;
 node_t BM_NUMS;
 
 static void collect_dpu_batch(struct dpu_set_t set, int base, int current_batch_size);
@@ -50,7 +52,7 @@ batch_count = (V_NR_DPUS + NR_DPUS - 1) / NR_DPUS; // 向上取整
 #endif
 
 // 分配 set
-struct dpu_set_t set, dpu;
+struct dpu_set_t set;
 int prev_batch_size = -1;
 bool set_valid = false;
 
@@ -62,8 +64,8 @@ for (int index = 0; index < batch_count; index++) {
     current_batch_size = ((base + NR_DPUS) <= V_NR_DPUS) ? NR_DPUS : (V_NR_DPUS - base);
 #endif
 
-    int bm_start = base;
-    int bm_end = base + current_batch_size - 1;
+    uint32_t bm_start = base;
+    uint32_t bm_end = base + current_batch_size - 1;
     // 判断 batch 是否全在 BM_DPUS 区域
     if (bm_end < BM_DPUS) {
         ////全在 BM 区域
@@ -73,8 +75,10 @@ for (int index = 0; index < batch_count; index++) {
             set_valid = true;
             prev_batch_size = current_batch_size;
         }
-        data_bm_transfer(set, g, bitmap, base);
+        data_bm_transfer(set,base);
+        start(&timer, 0, index);
         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
+        stop(&timer, 0);
         collect_dpu_batch(set, base, current_batch_size);
         
     }
@@ -86,8 +90,10 @@ for (int index = 0; index < batch_count; index++) {
             set_valid = true;
             prev_batch_size = current_batch_size;
         }
-        data_transfer(set, g, bitmap, base);
+        data_transfer(set, bitmap, base);
+        start(&timer, 0, index);
         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
+        stop(&timer, 0);
         collect_dpu_batch(set, base, current_batch_size);
     }
     // 跨界情况：需要拆分为两段处理
@@ -101,13 +107,13 @@ for (int index = 0; index < batch_count; index++) {
         // BM 部分
         struct dpu_set_t set_bm;
         DPU_ASSERT(dpu_alloc(bm_part, NULL, &set_bm));
-        data_transfer(set_bm, g, bitmap, base);
+        data_transfer(set_bm, bitmap, base);
         DPU_ASSERT(dpu_launch(set_bm, DPU_ASYNCHRONOUS)); // 异步启动
 
         // 普通部分
         struct dpu_set_t set_normal;
         DPU_ASSERT(dpu_alloc(normal_part, NULL, &set_normal));
-        data_transfer(set_normal, g, bitmap, base + bm_part);
+        data_transfer(set_normal, bitmap, base + bm_part);
         DPU_ASSERT(dpu_launch(set_normal, DPU_ASYNCHRONOUS)); // 异步启动
 
         // 同步等待 + 收集
@@ -124,6 +130,10 @@ for (int index = 0; index < batch_count; index++) {
 
     }
 }
+printf("DATA-NAME:"DATA_NAME"\n");
+printf("DPU ");
+print(&timer, 0, 1);
+
 
 if (set_valid) {
     DPU_ASSERT(dpu_free(set));
@@ -144,7 +154,7 @@ static void collect_dpu_batch(struct dpu_set_t set, int base, int current_batch_
     bool fine = true;
     bool finished, failed;
     struct dpu_set_t dpu;
-    uint32_t each_dpu;
+    int each_dpu;
 
     DPU_FOREACH(set, dpu, each_dpu) {
         if (each_dpu >= current_batch_size)
@@ -241,7 +251,7 @@ static void report_and_output_results() {
         }
     }
     total_dpu_cycle+=max_dpu_cycle;
-    printf("dpu time : %.2f ms\n", total_dpu_cycle*2.85e-6);
+    printf("DPU CYCLE TIME : %.2f ms\n", total_dpu_cycle*2.85e-6);
 
     for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
         float ratio = (float)large_degree_num[i] / g->root_num[i];

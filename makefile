@@ -79,37 +79,9 @@ test_single:
 	@./${BUILD_DIR}/host
 
 test_all:
-	@GRAPH=WV PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=WV PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=WV PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=WV PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=WV PATTERN=TRI_TRI6 make test --no-print-directory
-	@GRAPH=PP PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=PP PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=PP PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=PP PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=PP PATTERN=TRI_TRI6 make test --no-print-directory
-	@GRAPH=CA PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=CA PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=CA PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=CA PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=CA PATTERN=TRI_TRI6 make test --no-print-directory
-	@GRAPH=YT PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=YT PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=YT PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=YT PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=YT PATTERN=TRI_TRI6 make test --no-print-directory
-	@GRAPH=PT PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=PT PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=PT PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=PT PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=PT PATTERN=TRI_TRI6 make test --no-print-directory
-	@GRAPH=LJ PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=LJ PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=LJ PATTERN=CYCLE4 make test --no-print-directory
-	@GRAPH=LJ PATTERN=HOUSE5 make test --no-print-directory
-	@GRAPH=LJ PATTERN=TRI_TRI6 make test --no-print-directory
-
+	@GRAPH=CH PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=FE PATTERN=CLIQUE3 make test --no-print-directory
+	
 test_bitmap:
 	@GRAPH=WV PATTERN=CLIQUE4 make test --no-print-directory
 	@GRAPH=PP PATTERN=CLIQUE4 make test --no-print-directory

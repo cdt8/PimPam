@@ -13,7 +13,7 @@ node_t eff_num[N]={0};
 edge_ptr offset = 0;
 uint32_t no_partition_flag = 1; //true
 
-extern int BM_DPUS;
+extern uint32_t BM_DPUS;
 extern node_t BM_NUMS;
 uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL]={0};  //bitmap transfer
 
@@ -179,7 +179,7 @@ static void verify_bitmap_intersection(uint64_t op_bitmap[BITMAP_ROW][BITMAP_COL
 
     for (int i = 1; i < bm_nums; i++) {
         uint32_t common = 0;
-        for (int e = global_g->row_ptr[i]; e < global_g->row_ptr[i+1]; e++) {
+        for (node_t e = global_g->row_ptr[i]; e < global_g->row_ptr[i+1]; e++) {
             int j = global_g->col_idx[e];
             int bound = j;
             int word_limit = (bound + 63) >> 6;
@@ -265,10 +265,22 @@ static void read_input() {
     edge_ptr m;
     edge_ptr *row_ptr = global_g->row_ptr;
     node_t *col_idx = global_g->col_idx;
-    fread(&n, sizeof(node_t), 1, fin);
-    fread(&m, sizeof(edge_ptr), 1, fin);
-    fread(row_ptr, sizeof(edge_ptr), n, fin);
-    fread(col_idx, sizeof(node_t), m, fin);
+if (fread(&n, sizeof(node_t), 1, fin) != 1) {
+    perror("fread n failed");
+    exit(EXIT_FAILURE);
+}
+if (fread(&m, sizeof(edge_ptr), 1, fin) != 1) {
+    perror("fread m failed");
+    exit(EXIT_FAILURE);
+}
+if (fread(row_ptr, sizeof(edge_ptr), n, fin) != n) {
+    perror("fread row_ptr failed");
+    exit(EXIT_FAILURE);
+}
+if (fread(col_idx, sizeof(node_t), m, fin) != m) {
+    perror("fread col_idx failed");
+    exit(EXIT_FAILURE);
+}
     row_ptr[n] = m;
     fclose(fin);
     global_g->n = n;
@@ -710,7 +722,7 @@ void prepare_graph() {
 }
 
 
-void data_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base) {
+void data_transfer(struct dpu_set_t set,bitmap_t bitmap ,int base) {
     
 if(no_partition_flag){
     data_xfer(set,base);
@@ -759,6 +771,6 @@ static void data_bm_xfer(struct dpu_set_t set,int base) {
 
 }
 
-void data_bm_transfer(struct dpu_set_t set, Graph *g ,bitmap_t bitmap ,int base){
+void data_bm_transfer(struct dpu_set_t set,int base){
     data_bm_xfer(set,base);
 }

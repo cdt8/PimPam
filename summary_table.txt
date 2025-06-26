@@ -1,0 +1,3 @@
+Dataset              Time(ms)        Answer    
+cit-HepPh_adj        1128.385000     1276858   
+flickrEdges_adj      16546.992000    107987357 

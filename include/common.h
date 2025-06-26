@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>  // for debug
 
-#define PERF
+//#define PERF
 // #define DPU_LOG
 // #define CPU_RUN
 #define NO_PARTITION_AS_POSSIBLE
