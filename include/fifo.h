@@ -156,12 +156,22 @@ static inline void release_b_buf(int index) {
 // #endif
 
 
-static inline void __atomic_add(volatile ans_t *addr, ans_t val) {
-    ans_t old, new;
+// static inline void __atomic_add(__mram_ptr uint64_t *addr, ans_t val) {
+//     ans_t old, new;
+//     do {
+//         old = *addr;
+//         new = old + val;
+//     } while (!__atomic_compare_exchange_n(addr, &old, new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST));
+// }
+static inline void __atomic_add(__mram_ptr uint64_t *addr, uint64_t val) {
+    uint64_t old, new;
     do {
         old = *addr;
         new = old + val;
     } while (!__atomic_compare_exchange_n(addr, &old, new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST));
 }
+node_t intersect_from_buf(const node_t *a, uint32_t asize,
+                          const node_t *b, uint32_t bsize,
+                          uint32_t threshold);
 
 #endif // FIFO_H

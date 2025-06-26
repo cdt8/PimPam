@@ -1,9 +1,105 @@
 #include <dpu_mine.h>
 #include <common.h>
 #include <fifo.h>
+
+#define NR_LOADER 4
+#define NR_WORKER (NR_TASKLETS - NR_LOADER)
+
+#ifdef WRAM_ASYNC
+extern void clique3(sysname_t tasklet_id) {
+    printf("clique3");
+    if (tasklet_id == 0) {
+        printf("initing\n");
+        fifo_init(&global_fifo);
+    }
+    barrier_wait(&co_barrier);
+
+    if (tasklet_id < NR_LOADER) {
+        // === Loader Tasklet ===
+        for (node_t root_id = tasklet_id; root_id < root_num; root_id += NR_LOADER) {
+            node_t root = roots[root_id];
+            edge_ptr rb = row_ptr[root];
+            edge_ptr re = row_ptr[root + 1];
+            node_t root_size = re - rb;
+            // if (root_size < 2) continue;
+            int a_idx = -1, retry_a = 0;
+            // while ((a_idx = allocate_a_buf()) < 0 && retry_a++ < 1000);
+            // if (a_idx < 0) {
+            //     if (tasklet_id == 0) printf("[WARN] Failed to allocate A_BUF for root[%u]\n", root_id);
+            //     continue;
+            // }
+            int a_idx = allocate_a_buf();
+            if (a_idx < 0) continue;
+
+            mram_read(&col_idx[rb], a_buf_pool[a_idx], ALIGN8(root_size << SIZE_NODE_T_LOG));
+            a_buf_table[a_idx].ref_count = root_size ;
+
+            // 这里是从rb开始还是从rb+1开始呢
+            for (edge_ptr j = rb; j < re; j++) {
+                node_t second = col_idx[j];
+                edge_ptr sb = row_ptr[second];
+                edge_ptr se = row_ptr[second + 1];
+                node_t b_size = se - sb;
+                
+                int b_idx = -1, retry_b = 0;
+                // while ((b_idx = allocate_b_buf()) < 0 && retry_b++ < 1000);
+                // if (b_idx < 0) {
+                //     if (tasklet_id == 0) printf("[WARN] Failed to allocate B_BUF for root[%u] second[%u]\n", root_id, second);
+                //     continue;
+                // }
+
+                int b_idx = allocate_b_buf();
+                if (b_idx < 0) continue;
+
+                mram_read(&col_idx[sb], b_buf_pool[b_idx], ALIGN8(b_size << SIZE_NODE_T_LOG));
+                b_buf_table[b_idx].in_use = true;
+
+                job_t job = {
+                    .root_id = root_id,
+                    .a_index = a_idx,
+                    .b_index = b_idx,
+                    .a_size = root_size,
+                    .b_size = b_size,
+                    .threshold = UINT32_MAX
+                };
+
+                // while (!fifo_enqueue(&global_fifo, job));
+                while (!fifo_enqueue(&global_fifo, job)) {
+                    if (tasklet_id == 0) printf("[INFO] FIFO full. Waiting...\n");
+                }
+            }
+        }
+    } else {
+        
+        // === Worker Tasklet ===
+        while (1) {
+            job_t job;
+            if (!fifo_dequeue(&global_fifo, &job)) continue;
+
+            node_t *a = a_buf_pool[job.a_index];
+            node_t *b = b_buf_pool[job.b_index];
+            node_t res = intersect_from_buf(a, job.a_size, b, job.b_size, job.threshold);
+
+            // 原子加,这里还是应该用原子操作
+            // __atomic_add(&ans[job.root_id], res);
+            ans[job.root_id] += res;
+
+            // wram_partial_ans[tasklet_id-NR_LOADER][job.root_id]+=res;
+
+            release_b_buf(job.b_index);
+            a_buf_table[job.a_index].ref_count--;
+            if (a_buf_table[job.a_index].ref_count == 0) {
+                release_a_buf(job.a_index);
+            }
+        }
+    }
+}
+#else
+
 static ans_t partial_ans[NR_TASKLETS];
 static uint64_t partial_cycle[NR_TASKLETS];
 static perfcounter_cycles cycles[NR_TASKLETS];
+// static ans_t wram_partial_ans[NR_WORKER][DPU_ROOT_NUM];
 
 // #ifdef WRAM_ASYNC
 // __attribute__((section(".bss"))) fifo_t global_fifo;
@@ -71,108 +167,6 @@ static ans_t __imp_clique3_partition(sysname_t tasklet_id, node_t root) {
     }
     return ans;
 }
-
-
-//func begin
-
-// #include <dpu_mine.h>
-// #include <fifo.h>
-// #include <atomic.h> // 假设你有自定义或 SDK 中的原子操作
-
-#define NR_LOADER 4
-#define NR_WORKER (NR_TASKLETS - NR_LOADER)
-
-// static ans_t partial_ans[NR_TASKLETS];
-// #ifdef WRAM_ASYNC
-// __attribute__((section(".bss"))) fifo_t global_fifo;
-// #endif
-
-#ifdef WRAM_ASYNC
-extern void clique3(sysname_t tasklet_id) {
-    printf("clique3");
-    if (tasklet_id == 0) {
-        printf("initing\n");
-        fifo_init(&global_fifo);
-    }
-    barrier_wait(&co_barrier);
-
-    if (tasklet_id < NR_LOADER) {
-        // === Loader Tasklet ===
-        for (node_t root_id = tasklet_id; root_id < root_num; root_id += NR_LOADER) {
-            node_t root = roots[root_id];
-            edge_ptr rb = row_ptr[root];
-            edge_ptr re = row_ptr[root + 1];
-            node_t root_size = re - rb;
-            // if (root_size < 2) continue;
-            int a_idx = -1, retry_a = 0;
-            while ((a_idx = allocate_a_buf()) < 0 && retry_a++ < 1000);
-            if (a_idx < 0) {
-                if (tasklet_id == 0) printf("[WARN] Failed to allocate A_BUF for root[%u]\n", root_id);
-                continue;
-            }
-            // int a_idx = allocate_a_buf();
-            // if (a_idx < 0) continue;
-
-            mram_read(&col_idx[rb], a_buf_pool[a_idx], ALIGN8(root_size << SIZE_NODE_T_LOG));
-            a_buf_table[a_idx].ref_count = root_size - 1;
-
-            for (edge_ptr j = rb + 1; j < re; j++) {
-                node_t second = col_idx[j];
-                edge_ptr sb = row_ptr[second];
-                edge_ptr se = row_ptr[second + 1];
-                node_t b_size = se - sb;
-                
-                int b_idx = -1, retry_b = 0;
-                while ((b_idx = allocate_b_buf()) < 0 && retry_b++ < 1000);
-                if (b_idx < 0) {
-                    if (tasklet_id == 0) printf("[WARN] Failed to allocate B_BUF for root[%u] second[%u]\n", root_id, second);
-                    continue;
-                }
-
-                // int b_idx = allocate_b_buf();
-                // if (b_idx < 0) continue;
-
-                mram_read(&col_idx[sb], b_buf_pool[b_idx], ALIGN8(b_size << SIZE_NODE_T_LOG));
-                b_buf_table[b_idx].in_use = true;
-
-                job_t job = {
-                    .root_id = root_id,
-                    .a_index = a_idx,
-                    .b_index = b_idx,
-                    .a_size = root_size,
-                    .b_size = b_size,
-                    .threshold = UINT32_MAX
-                };
-
-                // while (!fifo_enqueue(&global_fifo, job));
-                while (!fifo_enqueue(&global_fifo, job)) {
-                    if (tasklet_id == 0) printf("[INFO] FIFO full. Waiting...\n");
-                }
-            }
-        }
-    } else {
-        // === Worker Tasklet ===
-        while (1) {
-            job_t job;
-            if (!fifo_dequeue(&global_fifo, &job)) continue;
-
-            node_t *a = a_buf_pool[job.a_index];
-            node_t *b = b_buf_pool[job.b_index];
-            node_t res = intersect_from_buf(a, job.a_size, b, job.b_size, job.threshold);
-
-            // 原子加
-            // __atomic_add(&ans[job.root_id], res);
-            ans[job.root_id] += res;
-
-            release_b_buf(job.b_index);
-            if (--a_buf_table[job.a_index].ref_count == 0) {
-                release_a_buf(job.a_index);
-            }
-        }
-    }
-}
-#else
-
 extern void clique3( sysname_t tasklet_id )
 {
 	node_t i = 0;
