@@ -8,12 +8,12 @@
 
 __mram_noinit_keep uint32_t bitmap[N >> 5];
 __mram_noinit_keep uint32_t involve_bitmap[N >> 5];
-__mram_noinit_keep uint32_t renumber[1<<21];
+__mram_noinit_keep uint32_t renumber[1<<23];
 __mram_noinit_keep edge_ptr row_ptr[PARTITION_M];
 __mram_noinit_keep node_t col_idx[PARTITION_M];
 __mram_noinit_keep edge_ptr processed_row_ptr[PARTITION_M];
 __mram_noinit_keep node_t processed_col_idx[PARTITION_M];
-__mram_noinit_keep node_t eff_num[PARTITION_M];
+//__mram_noinit_keep node_t eff_num[PARTITION_M];
 __mram_noinit_keep node_t roots[DPU_ROOT_NUM];
 __host uint64_t start;
 __host uint64_t size;
@@ -102,8 +102,8 @@ int main() {
                 row_size++;
                 if (cur_bitmap & (1 << ((start + i) & 31))) {
                     edge_ptr node_begin = row_ptr[i] - offset;   // intended DMA
-                    edge_ptr node_end = node_begin+eff_num[i];   // intended DMA
-                    //edge_ptr node_end = row_ptr[i+1] - offset;  // intended DMA
+                    //edge_ptr node_end = node_begin+eff_num[i];   // intended DMA
+                    edge_ptr node_end = row_ptr[i+1] - offset;  // intended DMA
                     for (edge_ptr j = node_begin; j < node_end; j++) {
                         node_t new_idx = binary_search_renumber(renumber,renumber_size, col_idx[j]);  // intended DMA
                         processed_col_idx[col_size] = new_idx;   // intended DMA

@@ -51,7 +51,7 @@
 #define N (1<<23)
 #define M (1<<27)
 #elif defined(ORKUT)
-#define DATA_NAME "com-orkut"
+#define DATA_NAME "com-orkutnew"
 #define N (1<<23)
 #define M (1<<28)
 #elif defined(PA)
@@ -78,6 +78,10 @@
 #define DATA_NAME "flickrEdges_adj"
 #define N (1<<17)
 #define M (1<<23)
+#elif defined(TW20)
+#define DATA_NAME "twitter20"
+#define N (1<<25)
+#define M (1<<28)
 #elif defined(NCA)
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)
@@ -138,10 +142,34 @@
 #define DATA_NAME "Theory-9-16-25-81-B1k"
 #define N (1<<20)
 #define M (1<<24)
+#elif defined(Theory_9_16_25_81_B2k)
+#define DATA_NAME "Theory-9-16-25-81-B1k"
+#define N (1<<20)
+#define M (1<<24)
 #elif defined(Theory_3_4_5_9_16_25_B1k)
 #define DATA_NAME "Theory-3-4-5-9-16-25-B1k"
 #define N (1<<23)
 #define M (1<<26)
+#elif defined(Theory_3_4_5_9_16_25_B2k)
+#define DATA_NAME "Theory-3-4-5-9-16-25-B2k"
+#define N (1<<23)
+#define M (1<<26)
+#elif defined(Theory_5_9_16_25_81_B1k)
+#define DATA_NAME "Theory-5-9-16-25-81-B1k"
+#define N (1<<23)
+#define M (1<<26)
+#elif defined(Theory_5_9_16_25_81_B2k)
+#define DATA_NAME "Theory-5-9-16-25-81-B2k"
+#define N (1<<23)
+#define M (1<<26)
+#elif defined(Theory_25_81_B1k)
+#define DATA_NAME "Theory-81-256-B1k"
+#define N (1<<20)
+#define M (1<<20)
+#elif defined(Theory_25_81_B2k)
+#define DATA_NAME "Theory-81-256-B2k"
+#define N (1<<20)
+#define M (1<<20)
 #elif defined(MAWI1)
 #define DATA_NAME "201512012345"
 #define N (1<<25)
@@ -154,6 +182,10 @@
 #define DATA_NAME "201512020030"
 #define N (1<<27)
 #define M (1<<28)
+#elif defined(MAWI4)
+#define DATA_NAME "201512020130"
+#define N (1<<27)
+#define M (1<<29)
 #elif defined(U1a)
 #define DATA_NAME "U1a"
 #define N (68863500)
@@ -166,6 +198,10 @@
 #define DATA_NAME "P1a"
 #define N (139364352)
 #define M (297864000)
+#elif defined(V1r)
+#define DATA_NAME "V1r"
+#define N (214005760)
+#define M (465412096)
 #else
 #warning "No graph selected, fall back to PP."
 #define DATA_NAME "p2p-Gnutella04"

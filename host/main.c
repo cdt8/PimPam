@@ -38,7 +38,6 @@ int main() {
     global_g = g;
     //bitmap=prepare_graph(); //bug not reslove
     prepare_graph();
- 
     stop(&timer, 0);
     printf("Data prepare ");
     print(&timer, 0, 1);

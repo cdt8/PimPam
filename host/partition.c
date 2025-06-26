@@ -245,11 +245,13 @@ static node_t count_high_degree_nodes(Graph *g, node_t threshold) {
 
 static void init_bm_num(){
     node_t node_count = count_high_degree_nodes(global_g, global_g->n*(0.0046));
-    int predict_dpu_num = node_count / (global_g->n / EF_NR_DPUS) * 3 ;
+    int denom = global_g->n / EF_NR_DPUS;
+    if (denom == 0) denom = 1;  // avoid 0
+    int predict_dpu_num = (node_count / denom) * 3;
     BM_NUMS = node_count;
     BM_DPUS = predict_dpu_num;
-    // BM_NUMS = 2048;
-    // BM_DPUS = 128;
+    //BM_NUMS = 0;
+    //BM_DPUS = 0;
     BM_DPUS &= ~63;
     if(!BM_DPUS)BM_NUMS=0;
     BM_DPUS = MIN(BM_DPUS,BM_NUMS);
@@ -516,7 +518,7 @@ static void data_compact(struct dpu_set_t set, bitmap_t bitmap,int base) {
             DPU_ASSERT(dpu_prepare_xfer(dpu, &processed_col_size[each_dpu]));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "processed_offset", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
-        DPU_ASSERT(dpu_broadcast_to(set, "eff_num", 0, &eff_num[start], ALIGN8((size) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
+        //DPU_ASSERT(dpu_broadcast_to(set, "eff_num", 0, &eff_num[start], ALIGN8((size) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
         DPU_ASSERT(dpu_broadcast_to(set, "row_ptr", 0, &global_g->row_ptr[start], ALIGN8((size + 1) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
         DPU_ASSERT(dpu_broadcast_to(set, "col_idx", 0, &global_g->col_idx[global_g->row_ptr[start]], ALIGN8((global_g->row_ptr[start + size] - global_g->row_ptr[start]) * sizeof(node_t)), DPU_XFER_DEFAULT));
         DPU_ASSERT(dpu_launch(set, DPU_SYNCHRONOUS));
