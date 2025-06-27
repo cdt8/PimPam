@@ -10,7 +10,7 @@ OBJ_DIR := obj
 INC_DIR := include
 
 NR_DPUS ?=64
-NR_TASKLETS ?= 16
+NR_TASKLETS ?= 2
 GRAPH ?= WV
 PATTERN ?= CLIQUE3
 

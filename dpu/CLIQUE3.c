@@ -2,7 +2,7 @@
 #include <common.h>
 #include <fifo.h>
 
-#define NR_LOADER 4
+#define NR_LOADER 1
 #define NR_WORKER (NR_TASKLETS - NR_LOADER)
 
 #ifdef WRAM_ASYNC
@@ -21,6 +21,8 @@ extern void clique3(sysname_t tasklet_id)
         // === Loader Tasklet ===
         for (node_t root_id = tasklet_id; root_id < root_num; root_id += NR_LOADER)
         {
+            printf("[INFO] Loader %d processing root %d\n", tasklet_id, root_id);
+
             node_t root = roots[root_id];
             edge_ptr rb = row_ptr[root];
             edge_ptr re = row_ptr[root + 1];
@@ -32,7 +34,6 @@ extern void clique3(sysname_t tasklet_id)
             mram_read(&col_idx[rb], a_buf_pool[a_idx], ALIGN8(root_size << SIZE_NODE_T_LOG));
             a_buf_table[a_idx].ref_count = root_size;
 
-            // 这里是从rb开始还是从rb+1开始呢
             for (edge_ptr j = rb; j < re; j++)
             {
                 node_t second = col_idx[j];
@@ -48,6 +49,7 @@ extern void clique3(sysname_t tasklet_id)
                 b_buf_table[b_idx].in_use = true;
 
                 job_t job = {
+                    .job_type = JOB_TYPE_NORMAL, // 标记为普通作业
                     .root_id = root_id,
                     .a_index = a_idx,
                     .b_index = b_idx,
@@ -55,13 +57,25 @@ extern void clique3(sysname_t tasklet_id)
                     .b_size = b_size,
                     .threshold = UINT32_MAX};
 
-                // while (!fifo_enqueue(&global_fifo, job));
                 while (!fifo_enqueue(&global_fifo, job))
                 {
                     if (tasklet_id == 0)
                         printf("[INFO] FIFO full. Waiting...\n");
                 }
             }
+        }
+        job_t terminate_job = {
+            .job_type = JOB_TYPE_TERMINATE,
+            .root_id = 0,
+            .a_index = -1,
+            .b_index = -1,
+            .a_size = 0,
+            .b_size = 0,
+            .threshold = 0};
+
+        while (!fifo_enqueue(&global_fifo, terminate_job))
+        {
+            // 等待队列有空间
         }
     }
     else
@@ -73,14 +87,16 @@ extern void clique3(sysname_t tasklet_id)
             job_t job;
             if (!fifo_dequeue(&global_fifo, &job))
                 continue;
-
+            if (job.job_type == JOB_TYPE_TERMINATE)
+            {
+                printf("[INFO] Worker %d received terminate signal, exiting\n", tasklet_id);
+                break;
+            }
             node_t *a = a_buf_pool[job.a_index];
             node_t *b = b_buf_pool[job.b_index];
             node_t res = intersect_from_buf(a, job.a_size, b, job.b_size, job.threshold);
 
             ans[job.root_id] += res;
-
-            // wram_partial_ans[tasklet_id-NR_LOADER][job.root_id]+=res;
 
             release_b_buf(job.b_index);
             a_buf_table[job.a_index].ref_count--;

@@ -13,6 +13,8 @@
 #define WRAM_MAX_ROOT_BUF_SLOT 8
 #define WRAM_MAX_SECOND_BUF_SLOT 16
 #define WRAM_BUF_SIZE 256
+#define JOB_TYPE_NORMAL 0
+#define JOB_TYPE_TERMINATE 1
 
 // ---------------- Root WRAM缓冲区元信息 ----------------
 typedef struct
@@ -36,6 +38,7 @@ typedef struct
 // ---------------- Job 结构 ----------------
 typedef struct
 {
+    int job_type; // 添加作业类型字段
     node_t root_id;
     uint8_t a_index; // 对应 WRAM loader 中的 a
     uint8_t b_index; // 对应 WRAM loader 中的 b
