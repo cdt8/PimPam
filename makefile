@@ -22,7 +22,7 @@ COMMON_LFLAGS := -DNR_TASKLETS=${NR_TASKLETS}
 HOST_LFLAGS := ${COMMON_LFLAGS} `dpu-pkg-config --libs dpu`
 DPU_LFLAGS := ${COMMON_LFLAGS}
 
-INC_FILE := ${INC_DIR}/common.h ${INC_DIR}/cyclecount.h ${INC_DIR}/timer.h ${INC_DIR}/dpu_mine.h
+INC_FILE := ${INC_DIR}/common.h ${INC_DIR}/cyclecount.h ${INC_DIR}/timer.h ${INC_DIR}/dpu_mine.h ${INC_DIR}/fifo.h
 
 .PHONY: all all_before host dpu clean test test_single test_all
 

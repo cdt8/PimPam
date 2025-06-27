@@ -21,8 +21,7 @@ extern void clique3(sysname_t tasklet_id) {
             edge_ptr rb = row_ptr[root];
             edge_ptr re = row_ptr[root + 1];
             node_t root_size = re - rb;
-            // if (root_size < 2) continue;
-            int a_idx = -1, retry_a = 0;
+            int retry_a = 0;
             // while ((a_idx = allocate_a_buf()) < 0 && retry_a++ < 1000);
             // if (a_idx < 0) {
             //     if (tasklet_id == 0) printf("[WARN] Failed to allocate A_BUF for root[%u]\n", root_id);
@@ -41,7 +40,7 @@ extern void clique3(sysname_t tasklet_id) {
                 edge_ptr se = row_ptr[second + 1];
                 node_t b_size = se - sb;
                 
-                int b_idx = -1, retry_b = 0;
+                int retry_b = 0;
                 // while ((b_idx = allocate_b_buf()) < 0 && retry_b++ < 1000);
                 // if (b_idx < 0) {
                 //     if (tasklet_id == 0) printf("[WARN] Failed to allocate B_BUF for root[%u] second[%u]\n", root_id, second);
@@ -80,8 +79,6 @@ extern void clique3(sysname_t tasklet_id) {
             node_t *b = b_buf_pool[job.b_index];
             node_t res = intersect_from_buf(a, job.a_size, b, job.b_size, job.threshold);
 
-            // 原子加,这里还是应该用原子操作
-            // __atomic_add(&ans[job.root_id], res);
             ans[job.root_id] += res;
 
             // wram_partial_ans[tasklet_id-NR_LOADER][job.root_id]+=res;

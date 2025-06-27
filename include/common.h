@@ -7,6 +7,7 @@
 #define PERF
 #define DPU_LOG
 // #define CPU_RUN
+#define WRAM_ASYNC
 #define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 

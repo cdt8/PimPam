@@ -6,7 +6,8 @@
 #include <stdbool.h>
 #include <attributes.h>  // for __mram_ptr
 #include "common.h"      // node_t 等基本定义
-#include <stdatomic.h>
+// #include <stdatomic.h>
+#include <mutex.h>
 #include <stddef.h> 
 
 #define WRAM_FIFO_CAPACITY 128   // Job缓冲上限，WRAM容量限制
@@ -61,6 +62,8 @@ __dma_aligned b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
 __dma_aligned node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
 __dma_aligned node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
 __dma_aligned fifo_t global_fifo;
+MUTEX_INIT(my_fifo_lock);
+
 
 
 static inline void fifo_init(fifo_t *fifo) {
@@ -78,11 +81,11 @@ inline bool fifo_is_full(fifo_t *fifo) {
 }
 
 inline void fifo_lock_acquire(volatile uint8_t *lock) {
-    while (__atomic_test_and_set(lock, __ATOMIC_ACQUIRE));
+    mutex_lock(my_fifo_lock);
 }
 
 inline void fifo_lock_release(volatile uint8_t *lock) {
-    __atomic_clear(lock, __ATOMIC_RELEASE);
+    mutex_unlock(my_fifo_lock);
 }
 
 bool fifo_enqueue(fifo_t *fifo, job_t job) {
