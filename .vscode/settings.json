@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "stdatomic.h": "c",
+        "common.h": "c",
+        "stddef.h": "c"
+    }
+}

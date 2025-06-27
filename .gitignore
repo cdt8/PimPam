@@ -9,3 +9,4 @@ nohup.out
 data0/
 data.zip
 venv/
+*.log

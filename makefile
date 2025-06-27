@@ -33,6 +33,7 @@ all_before:
 	@mkdir -p ${OBJ_DIR}
 	@mkdir -p ${OBJ_DIR}/${HOST_DIR}
 	@mkdir -p ${OBJ_DIR}/${DPU_DIR}
+	@mkdir -p ${OBJ_DIR}/${FIFO_DIR}
 	@mkdir -p result
 
 ${BUILD_DIR}/host: ${OBJ_DIR}/${HOST_DIR}/main.o ${OBJ_DIR}/${HOST_DIR}/partition.o ${OBJ_DIR}/${HOST_DIR}/mine.o ${OBJ_DIR}/${HOST_DIR}/set_op.o ${OBJ_DIR}/${HOST_DIR}/heap.o

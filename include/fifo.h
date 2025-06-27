@@ -4,28 +4,29 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <attributes.h>  // for __mram_ptr
-#include "common.h"      // node_t 等基本定义
-// #include <stdatomic.h>
+#include <attributes.h> // for __mram_ptr
+#include "common.h"     // node_t 等基本定义
 #include <mutex.h>
-#include <stddef.h> 
+#include <stddef.h>
 
-#define WRAM_FIFO_CAPACITY 128   // Job缓冲上限，WRAM容量限制
+#define WRAM_FIFO_CAPACITY 128 // Job缓冲上限，WRAM容量限制
 #define WRAM_MAX_ROOT_BUF_SLOT 8
 #define WRAM_MAX_SECOND_BUF_SLOT 16
 #define WRAM_BUF_SIZE 256
 
 // ---------------- Root WRAM缓冲区元信息 ----------------
-typedef struct {
+typedef struct
+{
     node_t root_id;
-    node_t *ptr;          // 指向 WRAM 实际缓冲
+    node_t *ptr; // 指向 WRAM 实际缓冲
     uint32_t size;
     uint32_t ref_count;
     bool in_use;
 } a_buf_entry_t;
 
 // ---------------- Second WRAM缓冲区元信息 ----------------
-typedef struct {
+typedef struct
+{
     node_t second_id;
     node_t *ptr;
     uint32_t size;
@@ -33,24 +34,19 @@ typedef struct {
 } b_buf_entry_t;
 
 // ---------------- Job 结构 ----------------
-// typedef struct {
-//     node_t root_id;
-//     uint8_t a_buf_index;   // root邻居槽位索引
-//     uint8_t b_buf_index;   // second邻居槽位索引
-//     uint32_t a_size;
-//     uint32_t b_size;
-// } job_t;
-typedef struct {
+typedef struct
+{
     node_t root_id;
-    uint8_t a_index;        // 对应 WRAM loader 中的 a
-    uint8_t b_index;        // 对应 WRAM loader 中的 b
+    uint8_t a_index; // 对应 WRAM loader 中的 a
+    uint8_t b_index; // 对应 WRAM loader 中的 b
     uint32_t a_size;
     uint32_t b_size;
-    uint32_t threshold;     // 可选阈值参数
+    uint32_t threshold; // 可选阈值参数
 } job_t;
 
 // ---------------- FIFO 定义 ----------------
-typedef struct {
+typedef struct
+{
     job_t buffer[WRAM_FIFO_CAPACITY];
     volatile uint32_t head;
     volatile uint32_t tail;
@@ -63,116 +59,115 @@ __dma_aligned node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
 __dma_aligned node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
 __dma_aligned fifo_t global_fifo;
 MUTEX_INIT(my_fifo_lock);
+MUTEX_INIT(a_buf_lock);
+MUTEX_INIT(b_buf_lock);
 
-
-
-static inline void fifo_init(fifo_t *fifo) {
+static inline void fifo_init(fifo_t *fifo)
+{
     fifo->head = 0;
     fifo->tail = 0;
     fifo->lock = 0;
 }
 
-inline bool fifo_is_empty(fifo_t *fifo) {
+inline bool fifo_is_empty(fifo_t *fifo)
+{
     return fifo->head == fifo->tail;
 }
 
-inline bool fifo_is_full(fifo_t *fifo) {
+inline bool fifo_is_full(fifo_t *fifo)
+{
     return ((fifo->tail + 1) % WRAM_FIFO_CAPACITY) == fifo->head;
 }
 
-inline void fifo_lock_acquire(volatile uint8_t *lock) {
+inline void fifo_lock_acquire()
+{
     mutex_lock(my_fifo_lock);
 }
 
-inline void fifo_lock_release(volatile uint8_t *lock) {
+inline void fifo_lock_release()
+{
     mutex_unlock(my_fifo_lock);
 }
 
-bool fifo_enqueue(fifo_t *fifo, job_t job) {
-    fifo_lock_acquire(&fifo->lock);
-    if (fifo_is_full(fifo)) {
-        fifo_lock_release(&fifo->lock);
+bool fifo_enqueue(fifo_t *fifo, job_t job)
+{
+    fifo_lock_acquire();
+    if (fifo_is_full(fifo))
+    {
+        fifo_lock_release();
         return false;
     }
     fifo->buffer[fifo->tail] = job;
     fifo->tail = (fifo->tail + 1) % WRAM_FIFO_CAPACITY;
-    fifo_lock_release(&fifo->lock);
+    fifo_lock_release();
     return true;
 }
 
-bool fifo_dequeue(fifo_t *fifo, job_t *job) {
-    fifo_lock_acquire(&fifo->lock);
-    if (fifo_is_empty(fifo)) {
-        fifo_lock_release(&fifo->lock);
+bool fifo_dequeue(fifo_t *fifo, job_t *job)
+{
+    fifo_lock_acquire();
+    if (fifo_is_empty(fifo))
+    {
+        fifo_lock_release();
         return false;
     }
     *job = fifo->buffer[fifo->head];
     fifo->head = (fifo->head + 1) % WRAM_FIFO_CAPACITY;
-    fifo_lock_release(&fifo->lock);
+    fifo_lock_release();
     return true;
 }
 
+static inline int allocate_a_buf()
+{
+    mutex_lock(a_buf_lock); // <<<< 加锁
 
-static inline int allocate_a_buf() {
-    for (int i = 0; i < WRAM_MAX_ROOT_BUF_SLOT; i++) {
-        if (!a_buf_table[i].in_use) {
+    for (int i = 0; i < WRAM_MAX_ROOT_BUF_SLOT; i++)
+    {
+        if (!a_buf_table[i].in_use)
+        {
             a_buf_table[i].in_use = true;
             a_buf_table[i].ref_count = 0;
+            mutex_unlock(a_buf_lock); // <<<< 解锁
             return i;
         }
     }
-    return -1;  // 分配失败
+    mutex_unlock(a_buf_lock); // <<<< 解锁
+    return -1;                // 分配失败
 }
 
-static inline void release_a_buf(int index) {
+static inline void release_a_buf(int index)
+{
+    mutex_lock(a_buf_lock); // <<<< 加锁
+
     a_buf_table[index].in_use = false;
     a_buf_table[index].ref_count = 0;
+    mutex_unlock(a_buf_lock); // <<<< 解锁
 }
 
-
-static inline int allocate_b_buf() {
-    for (int i = 0; i < WRAM_MAX_SECOND_BUF_SLOT; i++) {
-        if (!b_buf_table[i].in_use) {
+static inline int allocate_b_buf()
+{
+    mutex_lock(b_buf_lock); // <<<< 加锁
+    for (int i = 0; i < WRAM_MAX_SECOND_BUF_SLOT; i++)
+    {
+        if (!b_buf_table[i].in_use)
+        {
             b_buf_table[i].in_use = true;
+            mutex_unlock(b_buf_lock); // <<<< 解锁
             return i;
         }
     }
+    mutex_unlock(b_buf_lock); // <<<< 解锁
+
     return -1;
 }
 
-static inline void release_b_buf(int index) {
+static inline void release_b_buf(int index)
+{
     b_buf_table[index].in_use = false;
 }
 
 // ---------------- 全局共享资源（WRAM区域） ----------------
-// __host fifo_t global_fifo;
-// __host a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
-// __host b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
-// __host node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
-// __host node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
-// #ifdef WRAM_ASYNC
-// __dma_aligned a_buf_entry_t a_buf_table[WRAM_MAX_ROOT_BUF_SLOT];
-// __dma_aligned b_buf_entry_t b_buf_table[WRAM_MAX_SECOND_BUF_SLOT];
-// __dma_aligned node_t a_buf_pool[WRAM_MAX_ROOT_BUF_SLOT][WRAM_BUF_SIZE];
-// __dma_aligned node_t b_buf_pool[WRAM_MAX_SECOND_BUF_SLOT][WRAM_BUF_SIZE];
-// __dma_aligned fifo_t global_fifo;
-// #endif
 
-
-// static inline void __atomic_add(__mram_ptr uint64_t *addr, ans_t val) {
-//     ans_t old, new;
-//     do {
-//         old = *addr;
-//         new = old + val;
-//     } while (!__atomic_compare_exchange_n(addr, &old, new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST));
-// }
-static inline void __atomic_add(__mram_ptr uint64_t *addr, uint64_t val) {
-    uint64_t old, new;
-    do {
-        old = *addr;
-        new = old + val;
-    } while (!__atomic_compare_exchange_n(addr, &old, new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST));
-}
 node_t intersect_from_buf(const node_t *a, uint32_t asize,
                           const node_t *b, uint32_t bsize,
                           uint32_t threshold);
