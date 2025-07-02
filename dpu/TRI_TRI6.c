@@ -8,15 +8,15 @@ static ans_t __imp_tri_tri6_2(sysname_t tasklet_id, node_t root, node_t second_r
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
-    node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], INVALID_NODE);
+    node_t common_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], INVALID_NODE);
     for (edge_ptr i = 0; i < common_size; i++) {
         node_t third_root = mram_buf[tasklet_id][i];  // intended DMA
         if (third_root >= second_root) break;
         edge_ptr third_root_begin = row_ptr[third_root];  // intended DMA
         edge_ptr third_root_end = row_ptr[third_root + 1];  // intended DMA
-        node_t common_size2 = intersect_seq_buf_thresh(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + NR_TASKLETS], INVALID_NODE);
-        node_t common_size3 = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
-        node_t common_size123 = intersect_seq_buf_thresh(tasklet_buf, mram_buf[tasklet_id], common_size, mram_buf[tasklet_id + NR_TASKLETS], common_size2, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
+        node_t common_size2 = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + NR_TASKLETS], INVALID_NODE);
+        node_t common_size3 = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
+        node_t common_size123 = intersect_seq_buf_thresh_withcbuf(tasklet_buf, mram_buf[tasklet_id], common_size, mram_buf[tasklet_id + NR_TASKLETS], common_size2, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
         ans += ((ans_t)(common_size - 1)) * (common_size2 - 1) * (common_size3 - 1) - ((ans_t)common_size123) * (common_size + common_size2 + common_size3 - 5);
     }
     return ans;

@@ -32,12 +32,12 @@ static ans_t __imp_clique4_2(sysname_t tasklet_id, node_t root, node_t second_ro
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
-    node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
+    node_t common_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[root_begin], root_end - root_begin, &col_idx[second_root_begin], second_root_end - second_root_begin, mram_buf[tasklet_id], second_root);
     for (node_t j = 0; j < common_size; j++) {
         node_t third_root = mram_buf[tasklet_id][j];  // intended DMA
         edge_ptr third_root_begin = row_ptr[third_root];  // intended DMA
         edge_ptr third_root_end = row_ptr[third_root + 1];  // intended DMA
-        node_t common_size2 = intersect_seq_buf_thresh(tasklet_buf, mram_buf[tasklet_id], common_size, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + NR_TASKLETS], third_root);
+        node_t common_size2 = intersect_seq_buf_thresh_withcbuf(tasklet_buf, mram_buf[tasklet_id], common_size, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id + NR_TASKLETS], third_root);
         ans += common_size2;
     }
     return ans;

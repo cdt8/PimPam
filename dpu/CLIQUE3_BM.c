@@ -25,6 +25,7 @@ static ans_t __imp_clique3(sysname_t tasklet_id, node_t root) {
 	node_t second_root = col_idx[i];  // intended DMA	
 	ans += __imp_clique3_2( tasklet_id, bitmap[root], bitmap[second_root],second_root);
     }
+
     return ans;
 }
 
@@ -40,17 +41,17 @@ extern void clique3_bm( sysname_t tasklet_id )
 // 		node_t	root_end	= row_ptr[root + 1];    /* intended DMA */
 // 		node_t	root_size	= root_end - root_begin;
 // 		if ( root_size < BRANCH_LEVEL_THRESHOLD )break;
-        
+
 // #ifdef PERF
 // 		timer_start( &cycles[tasklet_id] );
 // #endif
 // 		partial_ans[tasklet_id] = 0;
-			
-// 			 for ( edge_ptr j = root_begin  ; j < root_end; j += 1 )
+
+// 			 for ( edge_ptr j = root_begin + tasklet_id ; j < root_end; j += NR_TASKLETS )
 // 			 {
 // 				node_t second_root = col_idx[j];  // intended DMA
-                
-// 				partial_ans[tasklet_id] +=__imp_clique3_2( tasklet_id, bitmap[root], bitmap[second_root],second_root);
+			    
+// 				partial_ans[tasklet_id] += __imp_clique3_2( tasklet_id, bitmap[root],  bitmap[second_root],second_root);
 // 			 }
 			 
 // #ifdef PERF

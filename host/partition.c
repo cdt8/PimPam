@@ -48,14 +48,16 @@ static inline double predict_workload(Graph *g, node_t root) {
         }
     }
     double eff_deg = eff_deg = l - g->row_ptr[root];
-    // if (deg > MRAM_BUF_SIZE) {
-    //     printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
-    //     exit(1);
-    // }
-    // if (eff_deg > BITMAP_SIZE * 32) {
-    //     printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
-    //     exit(1);
-    // }
+#ifndef PRUNING_OP
+    if (deg > MRAM_BUF_SIZE) {
+        printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
+        exit(1);
+    }
+    if (eff_deg > BITMAP_SIZE * 32) {
+        printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
+        exit(1);
+    }
+#endif
     double avg_deg = 0;
     for (edge_ptr i = g->row_ptr[root]; i < g->row_ptr[root + 1]; i++) {
         node_t neighbor = g->col_idx[i];
@@ -98,14 +100,16 @@ static inline double predict_workload(Graph *g, node_t root) {
     }
     double eff_deg = l - g->row_ptr[root];
     eff_num[root]=eff_deg;
-    // if (deg > MRAM_BUF_SIZE) {
-    //     printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
-    //     exit(1);
-    // }
-    // if (eff_deg > BITMAP_SIZE * 32) {
-    //     printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
-    //     exit(1);
-    // }
+#ifndef PRUNING_OP
+    if (deg > MRAM_BUF_SIZE) {
+        printf(ANSI_COLOR_RED "Error: deg too large\n" ANSI_COLOR_RESET);
+        exit(1);
+    }
+    if (eff_deg > BITMAP_SIZE * 32) {
+        printf(ANSI_COLOR_RED "Error: eff_deg too large\n" ANSI_COLOR_RESET);
+        exit(1);
+    }
+#endif
     double avg_deg = (double)global_g->m / global_g->n;
     double n = global_g->n;
     (void)deg;
@@ -250,8 +254,8 @@ static void init_bm_num(){
     int predict_dpu_num = (node_count / denom) * 3;
     BM_NUMS = node_count;
     BM_DPUS = predict_dpu_num;
-    //BM_NUMS = 0;
-    //BM_DPUS = 0;
+    BM_NUMS = 0;
+    BM_DPUS = 0;
     BM_DPUS &= ~63;
     if(!BM_DPUS)BM_NUMS=0;
     BM_DPUS = MIN(BM_DPUS,BM_NUMS);
@@ -423,7 +427,9 @@ static void data_allocate(bitmap_t bitmap) {
     heap_free(heap);
     memset(dpu_workload,0,sizeof(dpu_workload));
     //normal
+#ifdef PRUNING_OP
     cut_edge();
+#endif
     heap = heap_create(EF_NR_DPUS-BM_DPUS);
     heap_init(heap);
 
@@ -613,14 +619,17 @@ static void data_xfer(struct dpu_set_t set,int base) {
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "root_num", 0, sizeof(uint64_t), DPU_XFER_DEFAULT));
         DPU_FOREACH(set, dpu, each_dpu) {
+            if(global_g->root_num[each_dpu+base])
             DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->roots[each_dpu+base]));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "roots", 0, ALIGN8(max_root_num * sizeof(node_t)), DPU_XFER_DEFAULT));
         DPU_FOREACH(set, dpu, each_dpu) {
+            if(global_g->root_num[each_dpu+base])
             DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->row_ptr));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "row_ptr", 0, ALIGN8((global_g->n + 1) * sizeof(edge_ptr)), DPU_XFER_DEFAULT));
         DPU_FOREACH(set, dpu, each_dpu) {
+            if(global_g->root_num[each_dpu+base])
             DPU_ASSERT(dpu_prepare_xfer(dpu, global_g->col_idx));
         }
         DPU_ASSERT(dpu_push_xfer(set, DPU_XFER_TO_DPU, "col_idx", 0, ALIGN8(global_g->m * sizeof(node_t) * 3), DPU_XFER_DEFAULT));
@@ -629,6 +638,7 @@ static void data_xfer(struct dpu_set_t set,int base) {
         DPU_ASSERT(dpu_broadcast_to(set, "edge_offset", 0, &offset, sizeof(edge_ptr), DPU_XFER_DEFAULT));
 
 }
+
 
 static void*alloc_bitmap(uint32_t num_bits, size_t num_dpus) {
     uint64_t words_per_dpu = (uint64_t)num_bits/32;
@@ -713,8 +723,10 @@ void prepare_graph() {
     no_partition_flag=0; 
 #endif
 
+#ifdef PRUNING_OP
     if(no_partition_flag)col_redundant();
-    
+#endif
+
     init_op_bitmap(op_bitmap, BM_NUMS, global_g);
     //print_bitmap(op_bitmap, 100, 100);  //test
     //verify_bitmap_intersection(op_bitmap,bm_nums); //test

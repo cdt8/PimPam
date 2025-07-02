@@ -27,7 +27,7 @@ COMMON_CCFLAGS := -c -Wall -Wextra -g -O2 -I${INC_DIR} \
   ${EXTRA_FLAGS}
 
 
-HOST_CCFLAGS := ${COMMON_CCFLAGS} -std=c11 `dpu-pkg-config --cflags dpu` 
+HOST_CCFLAGS := ${COMMON_CCFLAGS} -std=c11 -mcmodel=large `dpu-pkg-config --cflags dpu` 
 DPU_CCFLAGS := ${COMMON_CCFLAGS}
 
 COMMON_LFLAGS := -DNR_TASKLETS=${NR_TASKLETS}
@@ -36,9 +36,15 @@ DPU_LFLAGS := ${COMMON_LFLAGS}
 
 INC_FILE := ${INC_DIR}/common.h ${INC_DIR}/cyclecount.h ${INC_DIR}/timer.h ${INC_DIR}/dpu_mine.h
 
+ifdef CLIQUE3
+  DPU_BM_TARGET = ${BUILD_DIR}/dpu_bm
+else
+  DPU_BM_TARGET =
+endif
+
 .PHONY: all all_before host dpu clean test test_single test_all
 
-all: all_before ${BUILD_DIR}/host ${BUILD_DIR}/dpu ${BUILD_DIR}/dpu_alloc ${BUILD_DIR}/dpu_bm
+all: all_before ${BUILD_DIR}/host ${BUILD_DIR}/dpu ${BUILD_DIR}/dpu_alloc $(DPU_BM_TARGET)
 
 all_before:
 	@mkdir -p ${BUILD_DIR}
@@ -56,7 +62,7 @@ ${BUILD_DIR}/dpu: ${OBJ_DIR}/${DPU_DIR}/main.o ${OBJ_DIR}/${DPU_DIR}/set_op.o ${
 ${BUILD_DIR}/dpu_alloc: ${OBJ_DIR}/${DPU_DIR}/partition.o
 	@${DPULINK} ${DPU_LFLAGS} $^ -o $@
 
-${BUILD_DIR}/dpu_bm: ${OBJ_DIR}/${DPU_DIR}/bitmap.o ${OBJ_DIR}/${DPU_DIR}/bit_op.o ${OBJ_DIR}/${DPU_DIR}/CLIQUE3_BM.o
+$(DPU_BM_TARGET): ${OBJ_DIR}/${DPU_DIR}/bitmap.o ${OBJ_DIR}/${DPU_DIR}/bit_op.o ${OBJ_DIR}/${DPU_DIR}/CLIQUE3_BM.o
 	@${DPULINK} ${DPU_LFLAGS} $^ -o $@
 
 ${OBJ_DIR}/${HOST_DIR}/%.o: ${HOST_DIR}/%.c ${INC_FILE}
@@ -79,19 +85,69 @@ test_single:
 	@./${BUILD_DIR}/host
 
 test_all:
-	@GRAPH=CH PATTERN=CLIQUE3 make test --no-print-directory
-	@GRAPH=FE PATTERN=CLIQUE3 make test --no-print-directory
-	
-test_bitmap:
-	@GRAPH=WV PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=PP PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=CA PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=YT PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=PT PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=LJ PATTERN=CLIQUE4 make test --no-print-directory
-	@GRAPH=WV PATTERN=CLIQUE5 make test --no-print-directory
-	@GRAPH=PP PATTERN=CLIQUE5 make test --no-print-directory
-	@GRAPH=CA PATTERN=CLIQUE5 make test --no-print-directory
-	@GRAPH=YT PATTERN=CLIQUE5 make test --no-print-directory
-	@GRAPH=PT PATTERN=CLIQUE5 make test --no-print-directory
-	@GRAPH=LJ PATTERN=CLIQUE5 make test --no-print-directory
+#####=====SNAP=====#####
+	@GRAPH=CA       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=PT       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=PA       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=NCA      PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=NTX      PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=FE    PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=P2P04    PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=P2P31    PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=LJ       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=AM0302   PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=AM0312   PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=AM0505   PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=AM0601   PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=CH       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=YT       PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=ORKUT   PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=TW20    PATTERN=CLIQUE3 EXTRA_FLAGS="-DV_NR_DPUS=25600" make test --no-print-directory 
+
+
+#####=====Theory Datasets=====#####
+	@GRAPH=Theory_16_25_81_B1k              PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_16_25_81_B2k              PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_256_625_B1k               PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_256_625_B2k               PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_5_9_16_25_B1k             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_5_9_16_25_B2k             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_25_81_256_B1k             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_25_81_256_B2k             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_4_5_9_16_25_B1k           PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_4_5_9_16_25_B2k           PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_9_16_25_81_B1k            PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_9_16_25_81_B2k            PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_3_4_5_9_16_25_B1k         PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_3_4_5_9_16_25_B2k         PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_5_9_16_25_81_B1k          PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=Theory_5_9_16_25_81_B2k          PATTERN=CLIQUE3 make test --no-print-directory
+#####=====Graph500=====#####
+	@GRAPH=SC18_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC19_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC20_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC21_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC22_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC23_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC24_4             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=SC25_4             PATTERN=CLIQUE3 make test --no-print-directory
+# #####=====MAWI=====#####
+	@GRAPH=MAWI1             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=MAWI2             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=MAWI3             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=MAWI4             PATTERN=CLIQUE3 make test --no-print-directory
+# #####=====GenBank Datasets=====#####
+	@GRAPH=U1a             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=V2a             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=P1a             PATTERN=CLIQUE3 make test --no-print-directory
+	@GRAPH=V1r             PATTERN=CLIQUE3 make test --no-print-directory
+
+test_sc:
+	@EXTRA_FLAGS="-DV_NR_DPUS=640" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=1280" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=2560" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=5120" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=10240" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=20480" make test --no-print-directory
+	@EXTRA_FLAGS="-DV_NR_DPUS=40960" make test --no-print-directory
+

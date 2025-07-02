@@ -13,7 +13,7 @@ static ans_t __imp_cycle4_2(sysname_t tasklet_id, node_t root, node_t second_roo
         if (third_root >= second_root) break;
         edge_ptr third_root_begin = row_ptr[third_root];  // intended DMA
         edge_ptr third_root_end = row_ptr[third_root + 1];  // intended DMA
-        node_t common_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id], root);
+        node_t common_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id], root);
         ans += common_size;
     }
     return ans;

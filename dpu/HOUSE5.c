@@ -8,16 +8,16 @@ static ans_t __imp_house5_2(sysname_t tasklet_id, node_t root, node_t second_roo
     edge_ptr second_root_begin = row_ptr[second_root];  // intended DMA
     edge_ptr second_root_end = row_ptr[second_root + 1];  // intended DMA
     ans_t ans = 0;
-    node_t fifth_root_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[root_begin], root_end - root_begin, mram_buf[tasklet_id + NR_TASKLETS], INVALID_NODE);
+    node_t fifth_root_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[root_begin], root_end - root_begin, mram_buf[tasklet_id + NR_TASKLETS], INVALID_NODE);
     node_t cur_cmp = 0;
     if (fifth_root_size) for (edge_ptr j = root_begin + start; j < root_end; j += step) {
         node_t third_root = col_idx[j];  // intended DMA
         if (third_root == second_root) continue;
         edge_ptr third_root_begin = row_ptr[third_root];  // intended DMA
         edge_ptr third_root_end = row_ptr[third_root + 1];  // intended DMA
-        node_t fourth_root_size = intersect_seq_buf_thresh(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id], INVALID_NODE);
+        node_t fourth_root_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, &col_idx[second_root_begin], second_root_end - second_root_begin, &col_idx[third_root_begin], third_root_end - third_root_begin, mram_buf[tasklet_id], INVALID_NODE);
         if (!fourth_root_size) continue;
-        node_t common_size = intersect_seq_buf_thresh(tasklet_buf, mram_buf[tasklet_id], fourth_root_size, mram_buf[tasklet_id + NR_TASKLETS], fifth_root_size, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
+        node_t common_size = intersect_seq_buf_thresh_withcbuf(tasklet_buf, mram_buf[tasklet_id], fourth_root_size, mram_buf[tasklet_id + NR_TASKLETS], fifth_root_size, mram_buf[tasklet_id + (NR_TASKLETS << 1)], INVALID_NODE);
         node_t cur_fifth = fifth_root_size;
         while (cur_cmp < fifth_root_size) {
             node_t fifth_root = mram_buf[tasklet_id + NR_TASKLETS][cur_cmp];  // intended DMA

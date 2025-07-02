@@ -8,7 +8,7 @@
 
 __mram_noinit_keep uint32_t bitmap[N >> 5];
 __mram_noinit_keep uint32_t involve_bitmap[N >> 5];
-__mram_noinit_keep uint32_t renumber[1<<23];
+__mram_noinit_keep uint32_t renumber[1<<22];
 __mram_noinit_keep edge_ptr row_ptr[PARTITION_M];
 __mram_noinit_keep node_t col_idx[PARTITION_M];
 __mram_noinit_keep edge_ptr processed_row_ptr[PARTITION_M];

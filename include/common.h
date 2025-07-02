@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>  // for debug
 
-//#define PERF
+#define PERF
 // #define DPU_LOG
 // #define CPU_RUN
+// #define STRONG_SCALABILITY
 #define NO_PARTITION_AS_POSSIBLE
 // #define MORE_ACCURATE_MODEL
 #if defined(CLIQUE4) || defined(CLIQUE5) 
@@ -22,14 +23,10 @@
 #define DATA_NAME "Wiki-Vote"
 #define N (1<<13)
 #define M (1<<18)
-#elif defined(PP)
-#define DATA_NAME "p2p-Gnutella04"
-#define N (1<<14)
-#define M (1<<17)
 #elif defined(CA)
-#define DATA_NAME "CA-AstroPh"
-#define N (1<<15)
-#define M (1<<19)
+#define DATA_NAME "ca-AstroPh"
+#define N (1<<16)
+#define M (1<<20)
 #elif defined(CAGQ)
 #define DATA_NAME "ca-GrQc_adj"
 #define N (1<<16)
@@ -51,7 +48,7 @@
 #define N (1<<23)
 #define M (1<<27)
 #elif defined(ORKUT)
-#define DATA_NAME "com-orkutnew"
+#define DATA_NAME "com-orkut"
 #define N (1<<23)
 #define M (1<<28)
 #elif defined(PA)
@@ -70,18 +67,14 @@
 #define DATA_NAME "simple_csr_graph"
 #define N (1<<6)
 #define M (1<<8)
-#elif defined(TH)
-#define DATA_NAME "Theory-4-5-9-16-B1k"
-#define N (1<<14)
-#define M (1<<20)
 #elif defined(FE)
 #define DATA_NAME "flickrEdges_adj"
 #define N (1<<17)
 #define M (1<<23)
 #elif defined(TW20)
-#define DATA_NAME "twitter20"
+#define DATA_NAME "twitter20new"
 #define N (1<<25)
-#define M (1<<28)
+#define M (1<<29)
 #elif defined(NCA)
 #define DATA_NAME "roadNet-CA_adj"
 #define N (1<<23)
@@ -106,14 +99,38 @@
 #define DATA_NAME "amazon0601_adj"
 #define N (1<<20)
 #define M (1<<23)
-#elif defined(SC18_16)
-#define DATA_NAME "scale18-ef16"
+#elif defined(SC18_4)
+#define DATA_NAME "scale18-ef4"
+#define N (1<<21)
+#define M (1<<25)
+#elif defined(SC19_4)
+#define DATA_NAME "scale19-ef4"
+#define N (1<<21)
+#define M (1<<25)
+#elif defined(SC20_4)
+#define DATA_NAME "scale20-ef4"
+#define N (1<<21)
+#define M (1<<25)
+#elif defined(SC21_4)
+#define DATA_NAME "scale21-ef4"
+#define N (1<<22)
+#define M (1<<25)
+#elif defined(SC22_4)
+#define DATA_NAME "scale22-ef4"
 #define N (1<<23)
 #define M (1<<26)
-#elif defined(SC19_16)
-#define DATA_NAME "scale19-ef16"
-#define N (1<<23)
+#elif defined(SC23_4)
+#define DATA_NAME "scale23-ef4"
+#define N (1<<24)
 #define M (1<<26)
+#elif defined(SC24_4)
+#define DATA_NAME "scale24-ef4"
+#define N (1<<25)
+#define M (1<<27)
+#elif defined(SC25_4)
+#define DATA_NAME "scale25-ef4"
+#define N (33556480)
+#define M (1<<29)
 #elif defined(P2P04)
 #define DATA_NAME "p2p-Gnutella04"
 #define N (1<<14)
@@ -122,6 +139,39 @@
 #define DATA_NAME "p2p-Gnutella31"
 #define N (1<<17)
 #define M (1<<20)
+//============
+#elif defined(Theory_16_25_81_B1k)
+#define DATA_NAME "Theory-16-25-81-B1k"
+#define N (1<<16)
+#define M (1<<19)
+#elif defined(Theory_16_25_81_B2k)
+#define DATA_NAME "Theory-16-25-81-B2k"
+#define N (1<<16)
+#define M (1<<19)
+#elif defined(Theory_256_625_B1k)
+#define DATA_NAME "Theory-256-625-B1k"
+#define N (1<<18)
+#define M (1<<20)
+#elif defined(Theory_256_625_B2k)
+#define DATA_NAME "Theory-256-625-B2k"
+#define N (1<<18)
+#define M (1<<20)
+#elif defined(Theory_25_81_B1k)
+#define DATA_NAME "Theory-25-81-B1k"
+#define N (1<<12)
+#define M (1<<14)
+#elif defined(Theory_25_81_B2k)
+#define DATA_NAME "Theory-25-81-B2k"
+#define N (1<<12)
+#define M (1<<14)
+#elif defined(Theory_5_9_16_25_B1k)
+#define DATA_NAME "Theory-5-9-16-25-B1k"
+#define N (1<<15)
+#define M (1<<19)
+#elif defined(Theory_5_9_16_25_B2k)
+#define DATA_NAME "Theory-5-9-16-25-B2k"
+#define N (1<<15)
+#define M (1<<19)
 #elif defined(Theory_25_81_256_B1k)
 #define DATA_NAME "Theory-25-81-256-B1k"
 #define N (1<<20)
@@ -143,7 +193,7 @@
 #define N (1<<20)
 #define M (1<<24)
 #elif defined(Theory_9_16_25_81_B2k)
-#define DATA_NAME "Theory-9-16-25-81-B1k"
+#define DATA_NAME "Theory-9-16-25-81-B2k"
 #define N (1<<20)
 #define M (1<<24)
 #elif defined(Theory_3_4_5_9_16_25_B1k)
@@ -162,11 +212,11 @@
 #define DATA_NAME "Theory-5-9-16-25-81-B2k"
 #define N (1<<23)
 #define M (1<<26)
-#elif defined(Theory_25_81_B1k)
+#elif defined(Theory_81_256_B1k)
 #define DATA_NAME "Theory-81-256-B1k"
 #define N (1<<20)
 #define M (1<<20)
-#elif defined(Theory_25_81_B2k)
+#elif defined(Theory_81_256_B2k)
 #define DATA_NAME "Theory-81-256-B2k"
 #define N (1<<20)
 #define M (1<<20)
@@ -235,6 +285,7 @@
 #define KERNEL_FUNC clique2
 #define PATTERN_NAME "clique2"
 #elif defined(CLIQUE3)
+#define PRUNING_OP
 #define KERNEL_FUNC clique3
 #define KERNEL_FUNC_BM clique3_bm
 #define PATTERN_NAME "clique3"

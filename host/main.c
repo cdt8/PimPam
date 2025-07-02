@@ -237,13 +237,15 @@ static void report_and_output_results() {
             NR_DPUS, NR_TASKLETS, DPU_BINARY, PATTERN_NAME);
     fprintf(fp, "N: %u, M: %u, avg_deg: %f\n", g->n, g->m, (double)g->m / g->n);
 
-    uint64_t total_dpu_cycle = 0;
-    uint64_t max_dpu_cycle = 0;
+     uint64_t total_dpu_cycle = 0;
+     uint64_t max_dpu_cycle = 0;
     for (uint32_t i = 0; i < EF_NR_DPUS; i++) {
+#ifndef STRONG_SCALABILITY
         if(i%2560 == 0 ){
             total_dpu_cycle+=max_dpu_cycle;
             max_dpu_cycle=0;
         }
+#endif
         for (uint32_t j = 0; j < NR_TASKLETS; j++) {
             fprintf(fp, "DPU: %u, tasklet: %u, cycle: %lu, root_num: %lu\n",
                     i, j, cycle_ct_dpu[i][j], g->root_num[i]);
