@@ -36,7 +36,7 @@ DPU_LFLAGS := ${COMMON_LFLAGS}
 
 INC_FILE := ${INC_DIR}/common.h ${INC_DIR}/cyclecount.h ${INC_DIR}/timer.h ${INC_DIR}/dpu_mine.h
 
-ifdef CLIQUE3
+ifeq ($(PATTERN),CLIQUE3)
   DPU_BM_TARGET = ${BUILD_DIR}/dpu_bm
 else
   DPU_BM_TARGET =

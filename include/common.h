@@ -304,6 +304,12 @@
 #elif defined(TRI_TRI6)
 #define KERNEL_FUNC tri_tri6
 #define PATTERN_NAME "tri_tri6"
+#elif defined(HOOF4)
+#define KERNEL_FUNC hoof4
+#define PATTERN_NAME "hoof4"
+#elif defined(TELE5)
+#define KERNEL_FUNC tele5
+#define PATTERN_NAME "tele5"
 #else
 #warning "No kernel function selected, fall back to clique2."
 #define KERNEL_FUNC clique2

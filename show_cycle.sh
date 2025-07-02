@@ -48,7 +48,7 @@ fi
 
 # 执行 make test 并传入环境变量
 echo "Running: GRAPH=$GRAPH PATTERN=$PATTERN make test"
-GRAPH="$GRAPH" PATTERN="$PATTERN"  make test EXT RA_FLAGS="-DNO_RUN"
+GRAPH="$GRAPH" PATTERN="$PATTERN"  make test EXTRA_FLAGS="-DNO_RUN"
 
 # 检查 make 是否成功
 if [ $? -ne 0 ]; then

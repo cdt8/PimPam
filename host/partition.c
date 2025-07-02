@@ -83,6 +83,8 @@ static inline double predict_workload(Graph *g, node_t root) {
     return eff_deg * deg * avg_deg * (2 + deg / n + avg_deg / n) + 100;
 #elif defined(TRI_TRI6)
     return eff_deg * eff_deg * avg_deg * (deg + 3 * avg_deg + (deg + avg_deg) * avg_deg / n) + 100;
+#elif defined(TELE5)
+    return eff_deg * eff_deg * eff_deg * avg_deg * avg_deg * avg_deg + 100;
 #endif
 }
 #else
@@ -130,6 +132,10 @@ static inline double predict_workload(Graph *g, node_t root) {
     return eff_deg * deg * (2 + deg / n + avg_deg / n) + 100;
 #elif defined(TRI_TRI6)
     return eff_deg * eff_deg * (deg + 3 * avg_deg + (deg + avg_deg) * avg_deg / n) + 100;
+#elif defined(HOOF4)
+    return eff_deg * eff_deg + 100; 
+#elif defined(TELE5)
+    return eff_deg * eff_deg * eff_deg + 100;
 #endif
 }
 #endif
@@ -254,8 +260,8 @@ static void init_bm_num(){
     int predict_dpu_num = (node_count / denom) * 3;
     BM_NUMS = node_count;
     BM_DPUS = predict_dpu_num;
-    BM_NUMS = 0;
-    BM_DPUS = 0;
+    //BM_NUMS = 2048;
+    //BM_DPUS = 128;
     BM_DPUS &= ~63;
     if(!BM_DPUS)BM_NUMS=0;
     BM_DPUS = MIN(BM_DPUS,BM_NUMS);
